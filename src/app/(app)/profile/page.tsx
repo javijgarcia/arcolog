@@ -33,7 +33,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Form */}
-      <form action={updateProfile} className="card p-6 space-y-4">
+      <form action={updateProfile as (formData: FormData) => void} className="card p-6 space-y-4">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">Editar información</h2>
 
         <div>
