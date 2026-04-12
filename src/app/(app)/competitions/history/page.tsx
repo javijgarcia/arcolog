@@ -66,7 +66,7 @@ export default async function CompetitionsHistoryPage() {
                 )}
               </div>
 
-              <form action={deleteCompetitionScore.bind(null, s.id)}>
+           <form action={async () => { 'use server'; await deleteCompetitionScore(s.id) }}>
                 <button type="submit" className="p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
