@@ -1,0 +1,132 @@
+import { Suspense } from 'react'
+import { getDashboardStats, getProfile } from '@/lib/actions/profile'
+import { Target, Flame, Trophy, TrendingUp, Calendar, ArrowRight } from 'lucide-react'
+import { formatDate, feelingEmoji } from '@/lib/utils'
+import Link from 'next/link'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = { title: 'Inicio' }
+
+export default async function DashboardPage() {
+  const [stats, profile] = await Promise.all([getDashboardStats(), getProfile()])
+
+  const firstName = profile?.full_name?.split(' ')[0] ?? 'Arquero'
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+          Hola, {firstName} 👋
+        </h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">
+          {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+        </p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Calendar className="w-5 h-5 text-brand-500" />}
+          label="Sesiones"
+          value={stats?.totalSessions ?? 0}
+          bg="bg-brand-50 dark:bg-brand-900/20"
+        />
+        <StatCard
+          icon={<Target className="w-5 h-5 text-orange-500" />}
+          label="Flechas tiradas"
+          value={(stats?.totalArrows ?? 0).toLocaleString('es-ES')}
+          bg="bg-orange-50 dark:bg-orange-900/20"
+        />
+        <StatCard
+          icon={<Trophy className="w-5 h-5 text-amber-500" />}
+          label="Competiciones"
+          value={stats?.totalCompetitions ?? 0}
+          bg="bg-amber-50 dark:bg-amber-900/20"
+        />
+        <StatCard
+          icon={<TrendingUp className="w-5 h-5 text-green-500" />}
+          label="Mejor marca"
+          value={stats?.personalBest ?? '—'}
+          bg="bg-green-50 dark:bg-green-900/20"
+        />
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link href="/training/new" className="card p-5 hover:shadow-md transition-shadow group flex items-center gap-4">
+          <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-slate-900 dark:text-white">Registrar entreno</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Nueva sesión de hoy</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 transition-colors" />
+        </Link>
+        <Link href="/competitions/new" className="card p-5 hover:shadow-md transition-shadow group flex items-center gap-4">
+          <div className="w-11 h-11 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+            <Trophy className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-slate-900 dark:text-white">Registrar competición</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Añadir resultado</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
+        </Link>
+      </div>
+
+      {/* Recent sessions */}
+      {stats && stats.recentSessions.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Últimas sesiones</h2>
+            <Link href="/training/history" className="text-sm text-brand-600 dark:text-brand-400 hover:underline">
+              Ver todo
+            </Link>
+          </div>
+          <div className="card divide-y divide-slate-100 dark:divide-slate-800">
+            {stats.recentSessions.map((s: any) => (
+              <Link key={s.id} href={`/training/${s.id}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div className="text-xl">{feelingEmoji(s.feeling_score)}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{formatDate(s.session_date)}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{s.total_arrows} flechas · {s.distance_meters}m</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Empty state */}
+      {stats && stats.totalSessions === 0 && (
+        <div className="card p-10 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center mx-auto mb-4">
+            <Target className="w-8 h-8 text-brand-500" />
+          </div>
+          <h3 className="font-semibold text-slate-900 dark:text-white mb-2">¡Bienvenido a ArcoLog!</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs mx-auto">
+            Registra tu primera sesión de entrenamiento para empezar a ver tu progreso.
+          </p>
+          <Link href="/training/new" className="btn-primary">
+            Registrar primer entreno
+          </Link>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StatCard({ icon, label, value, bg }: { icon: React.ReactNode; label: string; value: string | number; bg: string }) {
+  return (
+    <div className="stat-card">
+      <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-2`}>
+        {icon}
+      </div>
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+    </div>
+  )
+}
