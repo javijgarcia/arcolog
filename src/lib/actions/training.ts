@@ -13,7 +13,6 @@ export async function createTrainingSession(data: TrainingSessionForm) {
 
   const { ends, ...sessionData } = data
 
-  // Insert session
   const { data: session, error: sessionError } = await supabase
     .from('training_sessions')
     .insert({
@@ -26,11 +25,16 @@ export async function createTrainingSession(data: TrainingSessionForm) {
 
   if (sessionError) return { error: sessionError.message }
 
-  // Insert all ends
   if (ends.length > 0) {
     const { error: endsError } = await supabase
       .from('session_ends')
-      .insert(ends.map(e => ({ ...e, session_id: session.id })))
+      .insert(ends.map(e => ({
+        session_id: session.id,
+        end_number: e.end_number,
+        arrows: e.arrows,
+        score: e.score,
+        arrow_scores: e.arrow_scores,
+      })))
 
     if (endsError) return { error: endsError.message }
   }
@@ -38,37 +42,6 @@ export async function createTrainingSession(data: TrainingSessionForm) {
   revalidatePath('/training/history')
   revalidatePath('/dashboard')
   redirect('/training/history')
-}
-
-export async function updateTrainingSession(id: string, data: Partial<TrainingSessionForm>) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) return { error: 'No autenticado' }
-
-  const { ends, ...sessionData } = data
-
-  const { error } = await supabase
-    .from('training_sessions')
-    .update({ ...sessionData, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  if (error) return { error: error.message }
-
-  if (ends) {
-    await supabase.from('session_ends').delete().eq('session_id', id)
-    if (ends.length > 0) {
-      await supabase.from('session_ends').insert(
-        ends.map(e => ({ ...e, session_id: id }))
-      )
-    }
-  }
-
-  revalidatePath('/training/history')
-  revalidatePath(`/training/${id}`)
-  revalidatePath('/dashboard')
-  redirect(`/training/${id}`)
 }
 
 export async function deleteTrainingSession(id: string) {
