@@ -4,12 +4,16 @@ import { useState } from 'react'
 import { createCompetitionScore } from '@/lib/actions/competitions'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import { MODALITY_LABELS, COMPETITION_TYPE_LABELS } from '@/types'
+import type { Modality } from '@/types'
 
 const today = new Date().toISOString().split('T')[0]
 
 export default function NewCompetitionPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [modality, setModality] = useState<Modality | null>(null)
+  const [competitionType, setCompetitionType] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -20,7 +24,9 @@ export default function NewCompetitionPage() {
       competition_date: fd.get('competition_date') as string,
       competition_name: fd.get('competition_name') as string,
       category: fd.get('category') as string,
-      distance_meters: Number(fd.get('distance_meters')),
+      modality,
+      competition_type: competitionType as any,
+      distance_meters: Number(fd.get('distance_meters') || 0),
       round_type: fd.get('round_type') as string,
       total_score: Number(fd.get('total_score')),
       x_count: Number(fd.get('x_count') || 0),
@@ -47,6 +53,50 @@ export default function NewCompetitionPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* Modalidad */}
+        <div className="card p-6 space-y-4">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Modalidad</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.entries(MODALITY_LABELS) as [Modality, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setModality(modality === key ? null : key)}
+                className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                  modality === key
+                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tipo de competición */}
+        <div className="card p-6 space-y-4">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Tipo de competición</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(COMPETITION_TYPE_LABELS).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setCompetitionType(competitionType === key ? null : key)}
+                className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                  competitionType === key
+                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Datos del torneo */}
         <div className="card p-6 space-y-4">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">Datos del torneo</h2>
 
@@ -55,10 +105,12 @@ export default function NewCompetitionPage() {
               <label className="label">Fecha</label>
               <input name="competition_date" type="date" defaultValue={today} required className="input" />
             </div>
-            <div>
-              <label className="label">Distancia (m)</label>
-              <input name="distance_meters" type="number" min={1} defaultValue={18} className="input" />
-            </div>
+            {(modality === 'aire_libre' || modality === 'sala' || modality === null) && (
+              <div>
+                <label className="label">Distancia (m)</label>
+                <input name="distance_meters" type="number" min={1} defaultValue={18} className="input" />
+              </div>
+            )}
           </div>
 
           <div>
@@ -78,6 +130,7 @@ export default function NewCompetitionPage() {
           </div>
         </div>
 
+        {/* Resultado */}
         <div className="card p-6 space-y-4">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">Resultado</h2>
 
@@ -86,13 +139,17 @@ export default function NewCompetitionPage() {
             <input name="total_score" type="number" min={0} required className="input text-2xl font-bold h-14" placeholder="0" />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+         <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="label">X</label>
+              <label className="label">
+                {modality === '3d' ? '11s' : modality === 'campo' ? '6s' : 'X'}
+              </label>
               <input name="x_count" type="number" min={0} defaultValue={0} className="input" />
             </div>
             <div>
-              <label className="label">10s</label>
+              <label className="label">
+                {modality === '3d' ? '10s' : modality === 'campo' ? '5s' : modality === 'sala' ? '9s' : '10s'}
+              </label>
               <input name="tens_count" type="number" min={0} defaultValue={0} className="input" />
             </div>
             <div>

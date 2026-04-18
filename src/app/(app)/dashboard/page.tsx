@@ -1,6 +1,5 @@
-import { Suspense } from 'react'
 import { getDashboardStats, getProfile } from '@/lib/actions/profile'
-import { Target, Flame, Trophy, TrendingUp, Calendar, ArrowRight } from 'lucide-react'
+import { Target, Flame, Trophy, TrendingUp, Calendar, ArrowRight, Zap } from 'lucide-react'
 import { formatDate, feelingEmoji } from '@/lib/utils'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -9,20 +8,33 @@ export const metadata: Metadata = { title: 'Inicio' }
 
 export default async function DashboardPage() {
   const [stats, profile] = await Promise.all([getDashboardStats(), getProfile()])
-
   const firstName = profile?.full_name?.split(' ')[0] ?? 'Arquero'
+
+  const arrowsTrend = stats?.arrowsDiff ?? 0
+  const scoreTrend = stats?.scoreDiff ?? 0
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-          Hola, {firstName} 👋
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+            Hola, {firstName} 👋
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+        </div>
+        {(stats?.streak ?? 0) > 0 && (
+          <div className="card px-4 py-3 flex items-center gap-2">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="text-xl font-bold text-slate-900 dark:text-white leading-none">{stats?.streak}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">días seguidos</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stat cards */}
@@ -53,6 +65,37 @@ export default async function DashboardPage() {
         />
       </div>
 
+      {/* Esta semana vs semana anterior */}
+      {stats && (stats.thisWeek.sessions > 0 || stats.lastWeek.sessions > 0) && (
+        <div className="card p-5">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
+            Esta semana vs semana anterior
+          </h2>
+          <div className="grid grid-cols-3 gap-4">
+            <WeekCompare
+              label="Sesiones"
+              current={stats.thisWeek.sessions}
+              previous={stats.lastWeek.sessions}
+            />
+            <WeekCompare
+              label="Flechas"
+              current={stats.thisWeek.arrows}
+              previous={stats.lastWeek.arrows}
+            />
+            <WeekCompare
+              label="Puntuación"
+              current={stats.thisWeek.score}
+              previous={stats.lastWeek.score}
+            />
+          </div>
+          {stats.bestWeekArrows > 0 && (
+            <p className="text-xs text-slate-400 mt-3 text-right">
+              🏆 Mejor semana histórica: <strong className="text-slate-600 dark:text-slate-300">{stats.bestWeekArrows} flechas</strong>
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Quick actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Link href="/training/new" className="card p-5 hover:shadow-md transition-shadow group flex items-center gap-4">
@@ -77,7 +120,7 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Recent sessions */}
+      {/* Últimas sesiones */}
       {stats && stats.recentSessions.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -92,7 +135,7 @@ export default async function DashboardPage() {
                 <div className="text-xl">{feelingEmoji(s.feeling_score)}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{formatDate(s.session_date)}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{s.total_arrows} flechas · {s.distance_meters}m</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{s.total_arrows} flechas · {s.distance_meters > 0 ? `${s.distance_meters}m` : 'recorrido'}</p>
                 </div>
               </Link>
             ))}
@@ -119,7 +162,12 @@ export default async function DashboardPage() {
   )
 }
 
-function StatCard({ icon, label, value, bg }: { icon: React.ReactNode; label: string; value: string | number; bg: string }) {
+function StatCard({ icon, label, value, bg }: {
+  icon: React.ReactNode
+  label: string
+  value: string | number
+  bg: string
+}) {
   return (
     <div className="stat-card">
       <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-2`}>
@@ -127,6 +175,31 @@ function StatCard({ icon, label, value, bg }: { icon: React.ReactNode; label: st
       </div>
       <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
       <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+    </div>
+  )
+}
+
+function WeekCompare({ label, current, previous }: {
+  label: string
+  current: number
+  previous: number
+}) {
+  const diff = current - previous
+  const pct = previous > 0 ? Math.round((diff / previous) * 100) : null
+
+  return (
+    <div className="text-center">
+      <p className="text-xs text-slate-400 mb-1">{label}</p>
+      <p className="text-xl font-bold text-slate-900 dark:text-white">{current}</p>
+      <p className="text-xs mt-0.5">
+        {diff === 0 ? (
+          <span className="text-slate-400">igual</span>
+        ) : diff > 0 ? (
+          <span className="text-green-600 dark:text-green-400">↑ +{diff}{pct !== null ? ` (${pct}%)` : ''}</span>
+        ) : (
+          <span className="text-red-500">↓ {diff}{pct !== null ? ` (${pct}%)` : ''}</span>
+        )}
+      </p>
     </div>
   )
 }

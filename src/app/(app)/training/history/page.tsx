@@ -1,6 +1,6 @@
 import { getTrainingSessions } from '@/lib/actions/training'
 import { formatDate, feelingEmoji } from '@/lib/utils'
-import { TARGET_TYPE_LABELS, WEATHER_LABELS } from '@/types'
+import { MODALITY_LABELS } from '@/types'
 import Link from 'next/link'
 import { PlusCircle, ChevronRight } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -45,9 +45,9 @@ export default async function TrainingHistoryPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-medium text-slate-900 dark:text-white">{formatDate(s.session_date)}</p>
-                    {s.target_type && (
-                      <span className="badge-blue text-xs">{TARGET_TYPE_LABELS[s.target_type as keyof typeof TARGET_TYPE_LABELS]}</span>
-                    )}
+                   {s.modality && (
+  <span className="badge-blue text-xs">{MODALITY_LABELS[s.modality as keyof typeof MODALITY_LABELS]}</span>
+)}
                   </div>
                   <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
                     {s.total_arrows} flechas · {s.distance_meters}m

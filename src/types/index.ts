@@ -129,7 +129,7 @@ export interface CompetitionScore {
   competition_name: string
   category: string | null
   modality: Modality | null
-  competition_type: 'regional' | 'nacional' | 'internacional' | 'local' | null
+  competition_type: 'local' | 'provincial' | 'autonomica' | 'nacional' | 'internacional' | null
   distance_meters: number | null
   round_type: string | null
   total_score: number
@@ -179,7 +179,7 @@ export interface CompetitionScoreForm {
   competition_name: string
   category: string
   modality: Modality | null
-  competition_type: 'regional' | 'nacional' | 'internacional' | 'local' | null
+ competition_type: 'local' | 'provincial' | 'autonomica' | 'nacional' | 'internacional' | null
   distance_meters: number
   round_type: string
   total_score: number
@@ -232,7 +232,8 @@ export const FEELING_LABELS: Record<number, string> = {
 
 export const COMPETITION_TYPE_LABELS = {
   local: 'Local',
-  regional: 'Regional',
+  provincial: 'Provincial',
+  autonomica: 'Autonómica',
   nacional: 'Nacional',
   internacional: 'Internacional',
 }

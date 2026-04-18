@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, PlusCircle } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { createTrainingSession } from '@/lib/actions/training'
 import { ScoreBoard } from '@/components/training/ScoreBoard'
 import {
@@ -19,6 +19,9 @@ export default function NewTrainingPage() {
   const [seriesCount, setSeriesCount] = useState(2)
   const [dianaCount, setDianaCount] = useState(24)
   const [ends, setEnds] = useState<SessionEndForm[]>([])
+  const [controlMode, setControlMode] = useState(true)
+  const [freeArrows, setFreeArrows] = useState<number | ''>('')
+  const [freeScore, setFreeScore] = useState<number | ''>('')
 
   const config = MODALITY_CONFIG[modality]
 
@@ -31,12 +34,16 @@ export default function NewTrainingPage() {
     ? dianaCount * config.arrowsPerEnd * config.maxScore
     : config.endsPerSeries * seriesCount * config.arrowsPerEnd * config.maxScore
 
-  const totalScore = ends.reduce((s, e) => s + e.score, 0)
-  const totalArrows = ends.reduce((s, e) => s + e.arrows, 0)
+  const totalScore = controlMode
+    ? ends.reduce((s, e) => s + e.score, 0)
+    : Number(freeScore) || 0
+  const totalArrows = controlMode
+    ? ends.reduce((s, e) => s + e.arrows, 0)
+    : Number(freeArrows) || 0
   const avgPerArrow = totalArrows > 0 ? (totalScore / totalArrows).toFixed(2) : '—'
-  const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0
+  const percentage = maxScore > 0 && controlMode ? Math.round((totalScore / maxScore) * 100) : null
   const currentEndNumber = ends.length + 1
-  const sessionComplete = ends.length >= totalEndsExpected
+  const sessionComplete = controlMode && ends.length >= totalEndsExpected
 
   function handleEndComplete(end: SessionEndForm) {
     setEnds(prev => [...prev, end])
@@ -53,16 +60,17 @@ export default function NewTrainingPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (ends.length === 0) {
+    if (controlMode && ends.length === 0) {
       setError('Añade al menos una tanda antes de guardar.')
       return
     }
     setLoading(true)
     setError(null)
     const fd = new FormData(e.currentTarget)
+
     const result = await createTrainingSession({
       session_date: fd.get('session_date') as string,
-      distance_meters: Number(fd.get('distance_meters')),
+      distance_meters: Number(fd.get('distance_meters') || 0),
       modality,
       series_count: seriesCount,
       diana_count: config.hasDianas ? dianaCount : null,
@@ -71,7 +79,12 @@ export default function NewTrainingPage() {
       feeling_score: Number(fd.get('feeling_score')),
       weather: fd.get('weather') as Weather,
       notes: fd.get('notes') as string,
-      ends,
+      ends: controlMode ? ends : freeArrows ? [{
+        end_number: 1,
+        arrows: Number(freeArrows),
+        score: Number(freeScore) || 0,
+        arrow_scores: [],
+      }] : [],
     })
     if (result?.error) {
       setError(result.error)
@@ -92,6 +105,27 @@ export default function NewTrainingPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* Toggle Control */}
+        <div className="card p-4 flex items-center justify-between">
+          <div>
+            <p className="font-medium text-slate-900 dark:text-white">Modo control</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {controlMode ? 'Puntuación tanda a tanda con tablilla' : 'Solo total de flechas y puntuación'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setControlMode(!controlMode); setEnds([]) }}
+            className={`relative w-12 h-6 rounded-full transition-colors ${
+              controlMode ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'
+            }`}
+          >
+            <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+              controlMode ? 'translate-x-7' : 'translate-x-1'
+            }`} />
+          </button>
+        </div>
 
         {/* Modalidad */}
         <div className="card p-6 space-y-4">
@@ -114,8 +148,7 @@ export default function NewTrainingPage() {
             ))}
           </div>
 
-          {/* Series (Aire Libre y Sala) */}
-          {config.hasSeries && (
+          {controlMode && config.hasSeries && (
             <div>
               <label className="label">Número de series</label>
               <div className="flex gap-2">
@@ -137,21 +170,14 @@ export default function NewTrainingPage() {
             </div>
           )}
 
-          {/* Número de dianas (Campo y 3D) */}
-          {config.hasDianas && (
+          {controlMode && config.hasDianas && (
             <div>
               <label className="label">Número de dianas del recorrido</label>
               <input
-                type="number"
-                min={1}
-                max={48}
-                value={dianaCount}
+                type="number" min={1} max={48} value={dianaCount}
                 onChange={e => { setDianaCount(Number(e.target.value)); setEnds([]) }}
                 className="input"
               />
-              <p className="text-xs text-slate-400 mt-1">
-                Máximo: {dianaCount * config.arrowsPerEnd * config.maxScore} pts ({dianaCount} dianas × {config.arrowsPerEnd} flechas × {config.maxScore} pts)
-              </p>
             </div>
           )}
 
@@ -166,12 +192,9 @@ export default function NewTrainingPage() {
                 <input name="distance_meters" type="number" min={1} max={100} defaultValue={18} required className="input" />
               </div>
             )}
-            {config.hasDianas && (
-              <input name="distance_meters" type="hidden" value="0" />
-            )}
+            {config.hasDianas && <input name="distance_meters" type="hidden" value="0" />}
           </div>
 
-          {/* Papel de diana (oculto en 3D) */}
           {config.hasDianaPaper && (
             <div>
               <label className="label">Papel de diana</label>
@@ -213,29 +236,29 @@ export default function NewTrainingPage() {
           </div>
         </div>
 
-        {/* Tandas */}
-        <div className="card p-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-              Tandas {ends.length}/{totalEndsExpected}
-            </h2>
-            <div className="text-right">
-              <p className="text-lg font-bold text-slate-900 dark:text-white">{totalScore} pts</p>
-              <p className="text-xs text-slate-400">{percentage}% · {avgPerArrow} pts/flecha</p>
+        {/* Tandas — Modo Control */}
+        {controlMode && (
+          <div className="card p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                Tandas {ends.length}/{totalEndsExpected}
+              </h2>
+              <div className="text-right">
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{totalScore} pts</p>
+                <p className="text-xs text-slate-400">
+                  {percentage !== null ? `${percentage}% · ` : ''}{avgPerArrow} pts/flecha
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Tandas completadas */}
-          {ends.length > 0 && (
-            <div className="space-y-1.5">
-              {ends.map((end, i) => (
-                <div key={i} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5">
-                  <span className="text-xs text-slate-400 w-6">#{end.end_number}</span>
-                  <div className="flex gap-1 flex-1">
-                    {end.arrow_scores.map((s, j) => (
-                      <span
-                        key={j}
-                        className={`w-7 h-7 rounded-md text-xs flex items-center justify-center font-bold ${
+            {ends.length > 0 && (
+              <div className="space-y-1.5">
+                {ends.map((end, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5">
+                    <span className="text-xs text-slate-400 w-6">#{end.end_number}</span>
+                    <div className="flex gap-1 flex-1">
+                      {end.arrow_scores.map((s, j) => (
+                        <span key={j} className={`w-7 h-7 rounded-md text-xs flex items-center justify-center font-bold ${
                           s === 'X' || s === '10' || s === '9' || (modality === 'campo' && (s === '6' || s === '5'))
                             ? 'bg-yellow-300 text-yellow-900'
                             : s === '8' || s === '7' || (modality === '3d' && s === '11')
@@ -245,37 +268,70 @@ export default function NewTrainingPage() {
                             : s === '4' || s === '3' || (modality === 'campo' && ['4','3','2','1'].includes(s))
                             ? 'bg-gray-900 text-white'
                             : 'bg-white border border-gray-300 text-gray-500'
-                        }`}
-                      >
-                        {s}
-                      </span>
-                    ))}
+                        }`}>
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="font-semibold text-slate-900 dark:text-white text-sm">{end.score}</span>
                   </div>
-                  <span className="font-semibold text-slate-900 dark:text-white text-sm">{end.score}</span>
-                </div>
-              ))}
-              <button type="button" onClick={removeLastEnd} className="text-xs text-red-400 hover:text-red-500 px-1">
-                ← Deshacer última tanda
-              </button>
-            </div>
-          )}
+                ))}
+                <button type="button" onClick={removeLastEnd} className="text-xs text-red-400 hover:text-red-500 px-1">
+                  ← Deshacer última tanda
+                </button>
+              </div>
+            )}
 
-          {/* ScoreBoard para siguiente tanda */}
-          {!sessionComplete ? (
-            <ScoreBoard
-              modality={modality}
-              endNumber={currentEndNumber}
-              onEndComplete={handleEndComplete}
-            />
-          ) : (
-            <div className="text-center py-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-              <p className="text-green-700 dark:text-green-400 font-medium">✅ Sesión completa</p>
-              <p className="text-sm text-green-600 dark:text-green-500 mt-1">
-                {totalScore} / {maxScore} pts ({percentage}%) · {avgPerArrow} pts/flecha
-              </p>
+            {!sessionComplete ? (
+              <ScoreBoard
+                modality={modality}
+                endNumber={currentEndNumber}
+                onEndComplete={handleEndComplete}
+              />
+            ) : (
+              <div className="text-center py-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                <p className="text-green-700 dark:text-green-400 font-medium">✅ Sesión completa</p>
+                <p className="text-sm text-green-600 dark:text-green-500 mt-1">
+                  {totalScore} / {maxScore} pts ({percentage}%) · {avgPerArrow} pts/flecha
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Modo Libre */}
+        {!controlMode && (
+          <div className="card p-6 space-y-4">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Resumen del entreno</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Total de flechas <span className="text-slate-400 font-normal">(opcional)</span></label>
+                <input
+                  type="number" min={1}
+                  value={freeArrows}
+                  onChange={e => setFreeArrows(e.target.value ? Number(e.target.value) : '')}
+                  className="input"
+                  placeholder="72"
+                />
+              </div>
+              <div>
+                <label className="label">Puntuación total <span className="text-slate-400 font-normal">(opcional)</span></label>
+                <input
+                  type="number" min={0}
+                  value={freeScore}
+                  onChange={e => setFreeScore(e.target.value ? Number(e.target.value) : '')}
+                  className="input"
+                  placeholder="540"
+                />
+              </div>
             </div>
-          )}
-        </div>
+            {freeArrows && freeScore && (
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                Media: <strong>{(Number(freeScore) / Number(freeArrows)).toFixed(2)} pts/flecha</strong>
+              </div>
+            )}
+          </div>
+        )}
 
         {error && (
           <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3">
@@ -285,7 +341,7 @@ export default function NewTrainingPage() {
 
         <div className="flex gap-3">
           <Link href="/dashboard" className="btn-secondary flex-1 justify-center">Cancelar</Link>
-          <button type="submit" className="btn-primary flex-1 justify-center" disabled={loading || ends.length === 0}>
+          <button type="submit" className="btn-primary flex-1 justify-center" disabled={loading}>
             {loading ? 'Guardando...' : 'Guardar sesión'}
           </button>
         </div>
