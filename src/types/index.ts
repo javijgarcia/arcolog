@@ -136,6 +136,8 @@ export interface CompetitionScore {
   x_count: number
   tens_count: number
   ranking_position: number | null
+  series_count: number | null
+  diana_count: number | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -186,6 +188,8 @@ export interface CompetitionScoreForm {
   x_count: number
   tens_count: number
   ranking_position: number | null
+  series_count: number | null
+  diana_count: number | null
   notes: string
 }
 

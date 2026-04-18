@@ -1,7 +1,8 @@
-import { getProgressData } from '@/lib/actions/profile'
+import { getProgressData, getArrowsByMonth } from '@/lib/actions/profile'
 import { getTrainingSessions } from '@/lib/actions/training'
 import { getCompetitionScores } from '@/lib/actions/competitions'
 import { ProgressChart } from '@/components/progress/ProgressChart'
+import { ArrowsChart } from '@/components/progress/ArrowsChart'
 import { TrendingUp, Target, Trophy, Zap } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -16,10 +17,11 @@ export default async function ProgressPage({
 }) {
   const filter = (searchParams.filtro ?? 'todo') as Filter
 
-  const [progressData, sessions, competitions] = await Promise.all([
+  const [progressData, sessions, competitions, arrowsByMonth] = await Promise.all([
     getProgressData(filter),
     getTrainingSessions(),
     getCompetitionScores(),
+    getArrowsByMonth(),
   ])
 
   const totalArrows = sessions.reduce((s: number, sess: any) => s + (sess.total_arrows ?? 0), 0)
@@ -129,7 +131,16 @@ export default async function ProgressPage({
         ) : (
           <ProgressChart data={progressData} />
         )}
-      </div>
+     </div>
+
+      {arrowsByMonth.length > 0 && (
+        <div className="card p-6">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">
+            Flechas por mes
+          </h2>
+          <ArrowsChart data={arrowsByMonth} />
+        </div>
+      )}
 
       {competitions.length > 0 && (
         <div className="card overflow-hidden">

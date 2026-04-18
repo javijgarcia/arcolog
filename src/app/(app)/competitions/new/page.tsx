@@ -14,13 +14,15 @@ export default function NewCompetitionPage() {
   const [error, setError] = useState<string | null>(null)
   const [modality, setModality] = useState<Modality | null>(null)
   const [competitionType, setCompetitionType] = useState<string | null>(null)
+  const [seriesCount, setSeriesCount] = useState(2)
+  const [dianaCount, setDianaCount] = useState(24)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError(null)
     const fd = new FormData(e.currentTarget)
-    const result = await createCompetitionScore({
+   const result = await createCompetitionScore({
       competition_date: fd.get('competition_date') as string,
       competition_name: fd.get('competition_name') as string,
       category: fd.get('category') as string,
@@ -32,6 +34,8 @@ export default function NewCompetitionPage() {
       x_count: Number(fd.get('x_count') || 0),
       tens_count: Number(fd.get('tens_count') || 0),
       ranking_position: fd.get('ranking_position') ? Number(fd.get('ranking_position')) : null,
+      series_count: (modality === 'aire_libre' || modality === 'sala') ? seriesCount : null,
+      diana_count: (modality === 'campo' || modality === '3d') ? dianaCount : null,
       notes: fd.get('notes') as string,
     })
     if (result?.error) {
@@ -105,10 +109,44 @@ export default function NewCompetitionPage() {
               <label className="label">Fecha</label>
               <input name="competition_date" type="date" defaultValue={today} required className="input" />
             </div>
-            {(modality === 'aire_libre' || modality === 'sala' || modality === null) && (
+           {(modality === 'aire_libre' || modality === 'sala' || modality === null) && (
               <div>
                 <label className="label">Distancia (m)</label>
                 <input name="distance_meters" type="number" min={1} defaultValue={18} className="input" />
+              </div>
+            )}
+
+            {(modality === 'aire_libre' || modality === 'sala') && (
+              <div>
+                <label className="label">Número de series</label>
+                <div className="flex gap-2">
+                  {[1, 2].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setSeriesCount(n)}
+                      className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                        seriesCount === n
+                          ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {n} serie{n > 1 ? 's' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(modality === 'campo' || modality === '3d') && (
+              <div>
+                <label className="label">Número de dianas del recorrido</label>
+                <input
+                  type="number" min={1} max={48}
+                  value={dianaCount}
+                  onChange={e => setDianaCount(Number(e.target.value))}
+                  className="input"
+                />
               </div>
             )}
           </div>

@@ -224,3 +224,59 @@ export async function getProgressData(filter: 'semana' | 'mes' | 'año' | 'todo'
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
 }
+
+export async function getArrowsByMonth() {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const [trainRes, compRes] = await Promise.all([
+    supabase
+      .from('training_sessions')
+      .select('session_date, total_arrows')
+      .eq('user_id', user.id)
+      .order('session_date', { ascending: true }),
+    supabase
+      .from('competition_scores')
+      .select('competition_date, modality, series_count, diana_count')
+      .eq('user_id', user.id)
+      .order('competition_date', { ascending: true }),
+  ])
+
+  const monthMap: Record<string, { training: number; competition: number }> = {}
+
+  // Flechas de entrenamiento
+  for (const s of trainRes.data ?? []) {
+    const month = s.session_date.slice(0, 7)
+    if (!monthMap[month]) monthMap[month] = { training: 0, competition: 0 }
+    monthMap[month].training += s.total_arrows ?? 0
+  }
+
+  // Flechas de competición calculadas por modalidad
+  for (const c of compRes.data ?? []) {
+    const month = c.competition_date.slice(0, 7)
+    if (!monthMap[month]) monthMap[month] = { training: 0, competition: 0 }
+
+    let arrows = 0
+    if (c.modality === 'sala') {
+      arrows = (c.series_count ?? 2) * 10 * 3
+    } else if (c.modality === 'aire_libre') {
+      arrows = (c.series_count ?? 2) * 6 * 6
+    } else if (c.modality === 'campo') {
+      arrows = (c.diana_count ?? 0) * 3
+    } else if (c.modality === '3d') {
+      arrows = (c.diana_count ?? 0) * 2
+    }
+    monthMap[month].competition += arrows
+  }
+
+  return Object.entries(monthMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, data]) => ({
+      month,
+      label: new Date(month + '-01').toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
+      training: data.training,
+      competition: data.competition,
+      total: data.training + data.competition,
+    }))
+}
