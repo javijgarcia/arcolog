@@ -181,7 +181,7 @@ export default function NewTrainingPage() {
             </div>
           )}
 
-          <div className={`grid gap-4 ${config.hasDianas ? 'grid-cols-1' : 'grid-cols-2'}`}>
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Fecha</label>
               <input name="session_date" type="date" defaultValue={today} required className="input" />
