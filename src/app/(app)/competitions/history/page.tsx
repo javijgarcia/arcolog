@@ -2,14 +2,14 @@ import { getCompetitionScores } from '@/lib/actions/competitions'
 import { deleteCompetitionScore } from '@/lib/actions/competitions'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
-import { PlusCircle, Trophy, Trash2, Medal } from 'lucide-react'
+import { PlusCircle, Trophy, Medal } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Competiciones' }
 
 export default async function CompetitionsHistoryPage() {
   const scores = await getCompetitionScores()
-  const best = scores.length ? Math.max(...scores.map(s => s.total_score)) : null
+  const best = scores.length ? Math.max(...scores.map((s: any) => s.total_score)) : null
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -36,7 +36,11 @@ export default async function CompetitionsHistoryPage() {
       ) : (
         <div className="space-y-2">
           {scores.map((s: any) => (
-            <div key={s.id} className="card flex items-center gap-4 px-5 py-4">
+            <Link
+              key={s.id}
+              href={`/competitions/${s.id}`}
+              className="card flex items-center gap-4 px-5 py-4 hover:shadow-md transition-shadow group"
+            >
               <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
                 {s.total_score === best
                   ? <Medal className="w-5 h-5 text-amber-500" />
@@ -52,8 +56,8 @@ export default async function CompetitionsHistoryPage() {
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {formatDate(s.competition_date)}
                   {s.category ? ` · ${s.category}` : ''}
-                  {s.round_type ? ` · ${s.round_type}` : ''}
-                  {s.ranking_position ? ` · Posición #${s.ranking_position}` : ''}
+                  {s.competition_type ? ` · ${s.competition_type}` : ''}
+                  {s.modality ? ` · ${s.modality}` : ''}
                 </p>
               </div>
 
@@ -65,13 +69,7 @@ export default async function CompetitionsHistoryPage() {
                   </p>
                 )}
               </div>
-
-           <form action={async () => { 'use server'; await deleteCompetitionScore(s.id) }}>
-                <button type="submit" className="p-1.5 rounded-lg text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </form>
-            </div>
+            </Link>
           ))}
         </div>
       )}

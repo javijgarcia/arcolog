@@ -8,14 +8,13 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Progreso' }
 
-type Filter = 'semana' | 'mes' | 'año' | 'todo'
-
 export default async function ProgressPage({
   searchParams,
 }: {
-  searchParams: { filtro?: string }
+  searchParams: { filtro?: string; modalidad?: string }
 }) {
-  const filter = (searchParams.filtro ?? 'todo') as Filter
+  const filter = (searchParams.filtro ?? 'todo') as 'semana' | 'mes' | 'año' | 'todo'
+  const modalityFilter = searchParams.modalidad ?? 'todo'
 
   const [progressData, sessions, competitions, arrowsByMonth] = await Promise.all([
     getProgressData(filter),
@@ -45,12 +44,24 @@ export default async function ProgressPage({
     ? recentScores[0].score - recentScores[recentScores.length - 1].score
     : null
 
-  const filters: { key: Filter; label: string }[] = [
+  const timeFilters = [
     { key: 'semana', label: 'Semana' },
     { key: 'mes', label: 'Mes' },
     { key: 'año', label: 'Año' },
     { key: 'todo', label: 'Todo' },
   ]
+
+  const modalityFilters = [
+    { key: 'todo', label: 'Todas' },
+    { key: 'aire_libre', label: '🌤 Aire Libre' },
+    { key: 'sala', label: '🏠 Sala' },
+    { key: 'campo', label: '🌲 Campo' },
+    { key: '3d', label: '🐗 3D' },
+  ]
+
+  const filteredProgress = modalityFilter === 'todo'
+    ? progressData
+    : progressData.filter((d: any) => d.modality === modalityFilter || d.type === 'competition')
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -88,10 +99,8 @@ export default async function ProgressPage({
             <Zap className="w-4 h-4 text-green-500" />
           </div>
           <p className={`text-xl font-bold ${
-            trend === null
-              ? 'text-slate-900 dark:text-white'
-              : trend >= 0
-              ? 'text-green-600 dark:text-green-400'
+            trend === null ? 'text-slate-900 dark:text-white'
+              : trend >= 0 ? 'text-green-600 dark:text-green-400'
               : 'text-red-500'
           }`}>
             {trend === null ? '—' : `${trend >= 0 ? '+' : ''}${trend}`}
@@ -101,15 +110,15 @@ export default async function ProgressPage({
       </div>
 
       <div className="card p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
             Evolución de puntuaciones
           </h2>
           <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
-            {filters.map(f => (
+            {timeFilters.map(f => (
               <a
                 key={f.key}
-                href={`/progress?filtro=${f.key}`}
+                href={`/progress?filtro=${f.key}&modalidad=${modalityFilter}`}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   filter === f.key
                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
@@ -121,7 +130,24 @@ export default async function ProgressPage({
             ))}
           </div>
         </div>
-        {progressData.length === 0 ? (
+
+        <div className="flex gap-1 flex-wrap mb-4">
+          {modalityFilters.map(f => (
+            <a
+              key={f.key}
+              href={`/progress?filtro=${filter}&modalidad=${f.key}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                modalityFilter === f.key
+                  ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                  : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+              }`}
+            >
+              {f.label}
+            </a>
+          ))}
+        </div>
+
+        {filteredProgress.length === 0 ? (
           <div className="py-16 text-center">
             <TrendingUp className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
             <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -129,9 +155,9 @@ export default async function ProgressPage({
             </p>
           </div>
         ) : (
-          <ProgressChart data={progressData} />
+          <ProgressChart data={filteredProgress} />
         )}
-     </div>
+      </div>
 
       {arrowsByMonth.length > 0 && (
         <div className="card p-6">

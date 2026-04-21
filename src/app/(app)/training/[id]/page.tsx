@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getPhotos } from '@/lib/actions/photos'
+import { PhotoGallery } from '@/components/ui/PhotoGallery'
 import { getTrainingSession } from '@/lib/actions/training'
 import { deleteTrainingSession } from '@/lib/actions/training'
 import { formatDate, feelingEmoji } from '@/lib/utils'
@@ -30,6 +32,8 @@ function getArrowColor(score: string, modality: Modality): string {
 export default async function TrainingSessionPage({ params }: { params: { id: string } }) {
   const session = await getTrainingSession(params.id)
   if (!session) notFound()
+
+  const photos = await getPhotos(params.id)
 
   const ends = session.session_ends ?? []
   const totalScore = ends.reduce((s: number, e: any) => s + e.score, 0)
@@ -147,6 +151,14 @@ export default async function TrainingSessionPage({ params }: { params: { id: st
           </div>
         </div>
       )}
+	  {/* Fotos */}
+      <div className="card p-5 space-y-3">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">Fotos</h2>
+        <PhotoGallery
+          photos={photos}
+          sessionId={params.id}
+        />
+      </div>
     </div>
   )
 }

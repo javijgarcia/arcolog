@@ -239,5 +239,40 @@ export const COMPETITION_TYPE_LABELS = {
   provincial: 'Provincial',
   autonomica: 'Autonómica',
   nacional: 'Nacional',
-  internacional: 'Internacional',
+internacional: 'Internacional',
+}
+
+export interface Equipment {
+  id: string
+  user_id: string
+  marca_cuerpo: string | null
+  marca_palas: string | null
+  libras_nominales: number | null
+  libras_reales: number | null
+  longitud_flecha: number | null
+  tubos: string | null
+  tipo_plumas: string | null
+  spine: string | null
+  apertura: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SightMark {
+  id: string
+  user_id: string
+  distance_meters: number
+  mark: string
+  notes: string | null
+  created_at: string
+}
+
+export interface SessionPhoto {
+  id: string
+  user_id: string
+  session_id: string | null
+  competition_id: string | null
+  storage_path: string
+  caption: string | null
+  created_at: string
 }
