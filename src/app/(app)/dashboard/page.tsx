@@ -1,13 +1,15 @@
 import { getDashboardStats, getProfile } from '@/lib/actions/profile'
+import { getTrainingSessions } from '@/lib/actions/training'
 import { Target, Flame, Trophy, TrendingUp, Calendar, ArrowRight, Zap } from 'lucide-react'
 import { formatDate, feelingEmoji } from '@/lib/utils'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { TrainingHeatmap } from '@/components/progress/TrainingHeatmap'
 
 export const metadata: Metadata = { title: 'Inicio' }
 
 export default async function DashboardPage() {
-  const [stats, profile] = await Promise.all([getDashboardStats(), getProfile()])
+  const [stats, profile, allSessions] = await Promise.all([getDashboardStats(), getProfile(), getTrainingSessions()])
   const firstName = profile?.full_name?.split(' ')[0] ?? 'Arquero'
 
   const arrowsTrend = stats?.arrowsDiff ?? 0
@@ -121,6 +123,14 @@ export default async function DashboardPage() {
       </div>
 
       {/* Últimas sesiones */}
+	  {stats && stats.totalSessions > 0 && (
+        <section>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-3">Actividad del año</h2>
+          <div className="card p-5">
+           <TrainingHeatmap sessions={allSessions} />
+          </div>
+        </section>
+      )}
       {stats && stats.recentSessions.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">

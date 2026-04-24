@@ -276,3 +276,26 @@ export interface SessionPhoto {
   caption: string | null
   created_at: string
 }
+export interface Achievement {
+  id: string
+  user_id: string
+  code: string
+  unlocked_at: string
+}
+
+export const ACHIEVEMENTS: Record<string, { label: string; description: string; emoji: string }> = {
+  first_session: { emoji: '🏹', label: 'Primera flecha', description: 'Registraste tu primera sesión' },
+  first_competition: { emoji: '🏆', label: 'Primer torneo', description: 'Registraste tu primera competición' },
+  arrows_100: { emoji: '💯', label: '100 flechas', description: 'Has tirado 100 flechas en total' },
+  arrows_500: { emoji: '🎯', label: '500 flechas', description: 'Has tirado 500 flechas en total' },
+  arrows_1000: { emoji: '⭐', label: '1.000 flechas', description: 'Has tirado 1.000 flechas en total' },
+  arrows_5000: { emoji: '🌟', label: '5.000 flechas', description: 'Has tirado 5.000 flechas en total' },
+  streak_7: { emoji: '🔥', label: 'Racha de 7 días', description: '7 días seguidos entrenando' },
+  streak_30: { emoji: '💪', label: 'Racha de 30 días', description: '30 días seguidos entrenando' },
+  sessions_10: { emoji: '📅', label: '10 sesiones', description: 'Has completado 10 sesiones' },
+  sessions_25: { emoji: '📈', label: '25 sesiones', description: 'Has completado 25 sesiones' },
+  sessions_50: { emoji: '🎖️', label: '50 sesiones', description: 'Has completado 50 sesiones' },
+  personal_best: { emoji: '🥇', label: 'Récord personal', description: 'Has superado tu mejor marca en competición' },
+  efficiency_80: { emoji: '🎯', label: 'Precisión 80%', description: 'Has conseguido un 80% de efectividad en una sesión' },
+  efficiency_90: { emoji: '💎', label: 'Precisión 90%', description: 'Has conseguido un 90% de efectividad en una sesión' },
+}

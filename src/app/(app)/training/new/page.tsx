@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { createTrainingSession } from '@/lib/actions/training'
@@ -22,24 +22,17 @@ export default function NewTrainingPage() {
   const [controlMode, setControlMode] = useState(true)
   const [freeArrows, setFreeArrows] = useState<number | ''>('')
   const [freeScore, setFreeScore] = useState<number | ''>('')
+  const [loadingTemplate, setLoadingTemplate] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const config = MODALITY_CONFIG[modality]
-
-  const totalEndsExpected = config.hasDianas
-    ? dianaCount
-    : config.endsPerSeries * seriesCount
-
-  const totalArrowsExpected = totalEndsExpected * config.arrowsPerEnd
+  const totalEndsExpected = config.hasDianas ? dianaCount : config.endsPerSeries * seriesCount
   const maxScore = config.hasDianas
     ? dianaCount * config.arrowsPerEnd * config.maxScore
     : config.endsPerSeries * seriesCount * config.arrowsPerEnd * config.maxScore
 
-  const totalScore = controlMode
-    ? ends.reduce((s, e) => s + e.score, 0)
-    : Number(freeScore) || 0
-  const totalArrows = controlMode
-    ? ends.reduce((s, e) => s + e.arrows, 0)
-    : Number(freeArrows) || 0
+  const totalScore = controlMode ? ends.reduce((s, e) => s + e.score, 0) : Number(freeScore) || 0
+  const totalArrows = controlMode ? ends.reduce((s, e) => s + e.arrows, 0) : Number(freeArrows) || 0
   const avgPerArrow = totalArrows > 0 ? (totalScore / totalArrows).toFixed(2) : '—'
   const percentage = maxScore > 0 && controlMode ? Math.round((totalScore / maxScore) * 100) : null
   const currentEndNumber = ends.length + 1
@@ -58,6 +51,29 @@ export default function NewTrainingPage() {
     setEnds([])
   }
 
+  async function loadLastSession() {
+    setLoadingTemplate(true)
+    try {
+      const res = await fetch('/api/last-session')
+      const data = await res.json()
+      if (data && formRef.current) {
+        const form = formRef.current
+        const distanceInput = form.querySelector<HTMLInputElement>('[name="distance_meters"]')
+        const weatherSelect = form.querySelector<HTMLSelectElement>('[name="weather"]')
+        const objectiveInput = form.querySelector<HTMLInputElement>('[name="objective"]')
+        if (distanceInput && data.distance_meters) distanceInput.value = data.distance_meters
+        if (weatherSelect && data.weather) weatherSelect.value = data.weather
+        if (objectiveInput && data.objective) objectiveInput.value = data.objective
+        if (data.modality) handleModalityChange(data.modality)
+        if (data.series_count) setSeriesCount(data.series_count)
+        if (data.diana_count) setDianaCount(data.diana_count)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    setLoadingTemplate(false)
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (controlMode && ends.length === 0) {
@@ -67,7 +83,6 @@ export default function NewTrainingPage() {
     setLoading(true)
     setError(null)
     const fd = new FormData(e.currentTarget)
-
     const result = await createTrainingSession({
       session_date: fd.get('session_date') as string,
       distance_meters: Number(fd.get('distance_meters') || 0),
@@ -104,7 +119,17 @@ export default function NewTrainingPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} ref={formRef} className="space-y-6">
+
+        {/* Botón plantilla */}
+        <button
+          type="button"
+          onClick={loadLastSession}
+          disabled={loadingTemplate}
+          className="btn-secondary w-full justify-center"
+        >
+          {loadingTemplate ? 'Cargando...' : '🔄 Repetir último entreno'}
+        </button>
 
         {/* Toggle Control */}
         <div className="card p-4 flex items-center justify-between">
@@ -181,7 +206,7 @@ export default function NewTrainingPage() {
             </div>
           )}
 
-         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className={`grid gap-4 ${config.hasDianas ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
             <div>
               <label className="label">Fecha</label>
               <input name="session_date" type="date" defaultValue={today} required className="input" />

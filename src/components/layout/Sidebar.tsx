@@ -15,6 +15,7 @@ const navItems = [
   { href: '/competitions/new', label: 'Nueva competición', icon: Trophy },
   { href: '/competitions/history', label: 'Competiciones', icon: Trophy },
   { href: '/progress', label: 'Progreso', icon: TrendingUp },
+  { href: '/achievements', label: 'Logros', icon: Trophy },
   { href: '/profile', label: 'Perfil', icon: UserCircle },
 ]
 

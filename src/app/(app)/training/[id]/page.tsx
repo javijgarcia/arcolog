@@ -8,6 +8,7 @@ import { WEATHER_LABELS, FEELING_LABELS, MODALITY_LABELS, MODALITY_CONFIG } from
 import type { Modality } from '@/types'
 import { ChevronLeft, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import { getTrainingSessions } from '@/lib/actions/training'
 
 function getArrowColor(score: string, modality: Modality): string {
   if (modality === 'campo') {
@@ -30,10 +31,25 @@ function getArrowColor(score: string, modality: Modality): string {
 }
 
 export default async function TrainingSessionPage({ params }: { params: { id: string } }) {
-  const session = await getTrainingSession(params.id)
+ const session = await getTrainingSession(params.id)
   if (!session) notFound()
 
-  const photos = await getPhotos(params.id)
+  const [photos, allSessions] = await Promise.all([
+    getPhotos(params.id),
+    getTrainingSessions(),
+  ])
+
+  // Calcular media histórica
+  const sessionsWithScore = allSessions.filter((s: any) =>
+    s.session_ends && s.session_ends.length > 0 && s.id !== params.id
+  )
+  const historicalAvg = sessionsWithScore.length > 0
+    ? Math.round(
+        sessionsWithScore.reduce((sum: number, s: any) =>
+          sum + s.session_ends.reduce((a: number, e: any) => a + e.score, 0), 0
+        ) / sessionsWithScore.length
+      )
+    : null
 
   const ends = session.session_ends ?? []
   const totalScore = ends.reduce((s: number, e: any) => s + e.score, 0)
@@ -93,6 +109,24 @@ export default async function TrainingSessionPage({ params }: { params: { id: st
         </div>
       </div>
 
+{/* Comparativa vs media histórica */}
+      {historicalAvg !== null && totalScore > 0 && (
+        <div className={`card p-4 flex items-center gap-4 ${
+          totalScore >= historicalAvg
+            ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
+            : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
+        }`}>
+          <span className="text-2xl">{totalScore >= historicalAvg ? '📈' : '📉'}</span>
+          <div>
+            <p className={`font-semibold ${totalScore >= historicalAvg ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {totalScore >= historicalAvg ? 'Por encima de tu media' : 'Por debajo de tu media'}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Esta sesión: <strong>{totalScore}</strong> · Tu media: <strong>{historicalAvg}</strong> · Diferencia: <strong>{totalScore >= historicalAvg ? '+' : ''}{totalScore - historicalAvg}</strong>
+            </p>
+          </div>
+        </div>
+      )}
       {/* Detalles */}
       <div className="card p-5 space-y-3">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-1">Detalles</h2>

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { CompetitionScoreForm } from '@/types'
+import { checkAndUnlockAchievements } from '@/lib/actions/achievements'
 
 export async function createCompetitionScore(data: CompetitionScoreForm) {
   const supabase = await createServerSupabaseClient()
@@ -55,7 +56,7 @@ export async function deleteCompetitionScore(id: string) {
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
-
+await checkAndUnlockAchievements()
   revalidatePath('/competitions/history')
   revalidatePath('/progress')
   redirect('/competitions/history')

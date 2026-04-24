@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import type { TrainingSessionForm } from '@/types'
+import { checkAndUnlockAchievements } from '@/lib/actions/achievements'
 
 export async function createTrainingSession(data: TrainingSessionForm) {
   const supabase = await createServerSupabaseClient()
@@ -57,7 +58,8 @@ export async function deleteTrainingSession(id: string) {
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
-
+// Comprobar y desbloquear logros
+  await checkAndUnlockAchievements()
   revalidatePath('/training/history')
   revalidatePath('/dashboard')
   redirect('/training/history')
@@ -93,5 +95,21 @@ export async function getTrainingSession(id: string) {
     .single()
 
   if (error) return null
+  return data
+}
+export async function getLastSession() {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data } = await supabase
+    .from('training_sessions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('session_date', { ascending: false })
+    .limit(1)
+    .single()
+
   return data
 }
