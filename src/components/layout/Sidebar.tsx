@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, PlusCircle, History, Trophy, TrendingUp, UserCircle, Target, LogOut,
+  LayoutDashboard, PlusCircle, History, Trophy, TrendingUp, UserCircle, Target, LogOut, Users,
 } from 'lucide-react'
 import { logout } from '@/lib/actions/auth'
 import { cn } from '@/lib/utils'
@@ -15,8 +15,9 @@ const navItems = [
   { href: '/competitions/new', label: 'Nueva competición', icon: Trophy },
   { href: '/competitions/history', label: 'Competiciones', icon: Trophy },
   { href: '/progress', label: 'Progreso', icon: TrendingUp },
-  { href: '/achievements', label: 'Logros', icon: Trophy },
-  { href: '/profile', label: 'Perfil', icon: UserCircle },
+          { href: '/achievements', label: 'Logros', icon: Trophy },
+        { href: '/groups', label: 'Grupos', icon: Users },
+          { href: '/profile', label: 'Perfil', icon: UserCircle },
 ]
 
 const mainNav = navItems.slice(0, 6)
@@ -29,9 +30,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0 p-4">
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-2 mb-6">
-        <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center shrink-0">
-          <Target className="w-4 h-4 text-white" />
-        </div>
+        <img src="/logo.png" alt="ArcoLog" className="h-10 w-10 shrink-0 rounded-x1 object-contain" />
         <span className="font-semibold text-slate-900 dark:text-white">ArcoLog</span>
       </Link>
 
@@ -45,6 +44,8 @@ export function Sidebar() {
           { href: '/competitions/new', label: 'Nueva competición', icon: Trophy },
           { href: '/competitions/history', label: 'Competiciones', icon: Trophy },
           { href: '/progress', label: 'Progreso', icon: TrendingUp },
+          { href: '/achievements', label: 'Logros', icon: Trophy },
+          { href: '/groups', label: 'Grupos', icon: Users },
         ].map(item => (
           <Link
             key={item.href}
@@ -87,6 +88,7 @@ export function MobileBottomNav() {
         { href: '/training/new', icon: PlusCircle, label: 'Entreno' },
         { href: '/competitions/new', icon: Trophy, label: 'Comp.' },
         { href: '/progress', icon: TrendingUp, label: 'Progreso' },
+        { href: '/groups', icon: Users, label: 'Grupos' },
         { href: '/profile', icon: UserCircle, label: 'Perfil' },
       ].map(item => (
         <Link

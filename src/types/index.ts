@@ -299,3 +299,24 @@ export const ACHIEVEMENTS: Record<string, { label: string; description: string; 
   efficiency_80: { emoji: '🎯', label: 'Precisión 80%', description: 'Has conseguido un 80% de efectividad en una sesión' },
   efficiency_90: { emoji: '💎', label: 'Precisión 90%', description: 'Has conseguido un 90% de efectividad en una sesión' },
 }
+export type GroupRole = 'entrenador' | 'arquero'
+
+export interface Group {
+  id: string
+  name: string
+  description: string | null
+  invite_code: string
+  owner_id: string
+  created_at: string
+  updated_at: string
+  group_members?: GroupMember[]
+}
+
+export interface GroupMember {
+  id: string
+  group_id: string
+  user_id: string
+  role: GroupRole
+  joined_at: string
+  profiles?: Profile
+}

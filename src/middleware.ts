@@ -28,16 +28,17 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/auth')
   const isPublicRoute = request.nextUrl.pathname === '/'
+  const isUpdatePassword = request.nextUrl.pathname === '/auth/update-password'
 
   // Redirect unauthenticated users to login
-  if (!user && !isAuthRoute && !isPublicRoute) {
+ if (!user && !isAuthRoute && !isPublicRoute && !isUpdatePassword) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
   }
 
   // Redirect logged-in users away from auth pages
-  if (user && isAuthRoute) {
+  if (user && isAuthRoute && !isUpdatePassword) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

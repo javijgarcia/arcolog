@@ -8,9 +8,7 @@ export default function HomePage() {
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
-              <Target className="w-4 h-4 text-white" />
-            </div>
+           <img src="/logo.png" alt="ArcoLog" className="h-10 w-10 rounded-xl object-contain" />
             <span className="font-semibold text-slate-900 dark:text-white">ArcoLog</span>
           </div>
           <div className="flex items-center gap-2">

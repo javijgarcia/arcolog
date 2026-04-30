@@ -61,6 +61,12 @@ export default function LoginPage() {
           </p>
         )}
 
+        <div className="flex justify-end">
+          <Link href="/auth/reset-password" className="text-xs text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
+
         <button type="submit" className="btn-primary w-full justify-center" disabled={loading}>
           {loading ? 'Entrando...' : 'Entrar'}
         </button>

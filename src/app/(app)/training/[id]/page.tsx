@@ -59,9 +59,13 @@ export default async function TrainingSessionPage({ params }: { params: { id: st
   const modality = (session.modality ?? 'sala') as Modality
   const config = MODALITY_CONFIG[modality]
 
-  const maxScore = session.diana_count
-    ? session.diana_count * config.arrowsPerEnd * config.maxScore
-    : config.endsPerSeries * (session.series_count ?? 2) * config.arrowsPerEnd * config.maxScore
+  const totalArrowsForMax = session.total_arrows > 0 ? session.total_arrows : 
+    (session.diana_count
+      ? session.diana_count * config.arrowsPerEnd
+      : config.endsPerSeries * (session.series_count ?? 2) * config.arrowsPerEnd)
+
+  const endsFromArrows = Math.round(totalArrowsForMax / config.arrowsPerEnd)
+  const maxScore = endsFromArrows * config.arrowsPerEnd * config.maxScore
 
   const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0
 
