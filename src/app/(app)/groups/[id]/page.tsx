@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getGroupDetail, getMemberStats, leaveGroup, deleteGroup } from '@/lib/actions/groups'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { Users, Copy, Trash2, TrendingUp, Target, Trophy } from 'lucide-react'
+import { Users, Copy, Trash2, LogOut, TrendingUp, Target, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { CopyButton } from './CopyButton'
@@ -39,12 +39,8 @@ export default async function GroupDetailPage({ params }: { params: { id: string
           )}
         </div>
         <div className="flex gap-2">
-          {!isOwner && (
-            <form action={leaveGroup.bind(null, group.id) as any}>
-              <button type="submit" className="btn-ghost p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </form>
+   {!isOwner && (
+            <LeaveGroupButton groupId={group.id} />
           )}
           {!isOwner && (
             <LeaveGroupButton groupId={group.id} />
