@@ -2,26 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import {
-  LayoutDashboard, PlusCircle, History, Trophy, TrendingUp, UserCircle, Target, LogOut, Users,
+  LayoutDashboard, PlusCircle, History, Trophy, TrendingUp,
+  UserCircle, Target, LogOut, Users, Medal, MoreHorizontal, X,
 } from 'lucide-react'
 import { logout } from '@/lib/actions/auth'
 import { cn } from '@/lib/utils'
-
-const navItems = [
-  { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
-  { href: '/training/new', label: 'Nuevo entreno', icon: PlusCircle },
-  { href: '/training/history', label: 'Historial', icon: History },
-  { href: '/competitions/new', label: 'Nueva competición', icon: Trophy },
-  { href: '/competitions/history', label: 'Competiciones', icon: Trophy },
-  { href: '/progress', label: 'Progreso', icon: TrendingUp },
-          { href: '/achievements', label: 'Logros', icon: Trophy },
-        { href: '/groups', label: 'Grupos', icon: Users },
-          { href: '/profile', label: 'Perfil', icon: UserCircle },
-]
-
-const mainNav = navItems.slice(0, 6)
-const bottomNav = navItems.slice(6)
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -30,7 +17,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0 p-4">
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-2 mb-6">
-        <img src="/logo.png" alt="ArcoLog" className="h-10 w-10 shrink-0 rounded-x1 object-contain" />
+        <img src="/logo.png" alt="ArcoLog" className="h-12 w-12 shrink-0 rounded-xl object-contain" />
         <span className="font-semibold text-slate-900 dark:text-white">ArcoLog</span>
       </Link>
 
@@ -44,7 +31,7 @@ export function Sidebar() {
           { href: '/competitions/new', label: 'Nueva competición', icon: Trophy },
           { href: '/competitions/history', label: 'Competiciones', icon: Trophy },
           { href: '/progress', label: 'Progreso', icon: TrendingUp },
-          { href: '/achievements', label: 'Logros', icon: Trophy },
+          { href: '/achievements', label: 'Logros', icon: Medal },
           { href: '/groups', label: 'Grupos', icon: Users },
         ].map(item => (
           <Link
@@ -60,10 +47,7 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="space-y-0.5 pt-4 border-t border-slate-200 dark:border-slate-800">
-        <Link
-          href="/profile"
-          className={cn('nav-link', pathname === '/profile' && 'active')}
-        >
+        <Link href="/profile" className={cn('nav-link', pathname === '/profile' && 'active')}>
           <UserCircle className="w-4 h-4 shrink-0" />
           Perfil
         </Link>
@@ -80,31 +64,84 @@ export function Sidebar() {
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const [showMore, setShowMore] = useState(false)
+
+  const mainNav = [
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
+    { href: '/training/new', icon: PlusCircle, label: 'Entreno' },
+    { href: '/progress', icon: TrendingUp, label: 'Progreso' },
+    { href: '/groups', icon: Users, label: 'Grupos' },
+  ]
+
+  const moreNav = [
+    { href: '/training/history', icon: History, label: 'Historial' },
+    { href: '/competitions/new', icon: Trophy, label: 'Nueva comp.' },
+    { href: '/competitions/history', icon: Trophy, label: 'Competiciones' },
+    { href: '/achievements', icon: Medal, label: 'Logros' },
+    { href: '/profile', icon: UserCircle, label: 'Perfil' },
+  ]
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-2 safe-area-pb">
-      {[
-        { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
-        { href: '/training/new', icon: PlusCircle, label: 'Entreno' },
-        { href: '/competitions/new', icon: Trophy, label: 'Comp.' },
-        { href: '/progress', icon: TrendingUp, label: 'Progreso' },
-        { href: '/groups', icon: Users, label: 'Grupos' },
-        { href: '/profile', icon: UserCircle, label: 'Perfil' },
-      ].map(item => (
-        <Link
-          key={item.href}
-          href={item.href}
+    <>
+      {/* Panel "Más" */}
+      {showMore && (
+        <div className="lg:hidden fixed inset-0 z-40" onClick={() => setShowMore(false)}>
+          <div
+            className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 grid grid-cols-4 gap-3"
+            onClick={e => e.stopPropagation()}
+          >
+            {moreNav.map(item => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setShowMore(false)}
+                className={cn(
+                  'flex flex-col items-center gap-1 px-2 py-2 rounded-xl transition-colors text-xs',
+                  pathname === item.href
+                    ? 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20'
+                    : 'text-slate-500 dark:text-slate-400'
+                )}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="text-center leading-tight">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Barra inferior */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 py-2">
+        {mainNav.map(item => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              'flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors text-xs',
+              pathname === item.href
+                ? 'text-brand-600 dark:text-brand-400'
+                : 'text-slate-400 dark:text-slate-500'
+            )}
+          >
+            <item.icon className="w-5 h-5" />
+            <span>{item.label}</span>
+          </Link>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setShowMore(!showMore)}
           className={cn(
             'flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-colors text-xs',
-            pathname === item.href
+            showMore
               ? 'text-brand-600 dark:text-brand-400'
               : 'text-slate-400 dark:text-slate-500'
           )}
         >
-          <item.icon className="w-5 h-5" />
-          <span>{item.label}</span>
-        </Link>
-      ))}
-    </nav>
+          {showMore ? <X className="w-5 h-5" /> : <MoreHorizontal className="w-5 h-5" />}
+          <span>Más</span>
+        </button>
+      </nav>
+    </>
   )
 }
