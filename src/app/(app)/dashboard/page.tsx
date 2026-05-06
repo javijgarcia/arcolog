@@ -5,11 +5,19 @@ import { formatDate, feelingEmoji } from '@/lib/utils'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { TrainingHeatmap } from '@/components/progress/TrainingHeatmap'
+import { getMyPendingTrainings, getMyUpcomingTrainings } from '@/lib/actions/scheduled'
+import { PendingTrainingCard } from '@/components/training/PendingTrainingCard'
 
 export const metadata: Metadata = { title: 'Inicio' }
 
 export default async function DashboardPage() {
-  const [stats, profile, allSessions] = await Promise.all([getDashboardStats(), getProfile(), getTrainingSessions()])
+ const [stats, profile, allSessions, pendingTrainings, upcomingTrainings] = await Promise.all([
+    getDashboardStats(),
+    getProfile(),
+    getTrainingSessions(),
+    getMyPendingTrainings(),
+    getMyUpcomingTrainings(),
+  ])
   const firstName = profile?.full_name?.split(' ')[0] ?? 'Arquero'
 
   const arrowsTrend = stats?.arrowsDiff ?? 0
@@ -96,6 +104,33 @@ export default async function DashboardPage() {
             </p>
           )}
         </div>
+      )}
+	  {/* Entrenamientos pendientes */}
+      {pendingTrainings.length > 0 && (
+        <section>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
+            ⚠️ Entrenamientos pendientes
+          </h2>
+          <div className="space-y-2">
+            {pendingTrainings.map((c: any) => (
+              <PendingTrainingCard key={c.id} completion={c} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Próximos entrenamientos */}
+      {upcomingTrainings.length > 0 && (
+        <section>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
+            📅 Próximos entrenamientos
+          </h2>
+          <div className="space-y-2">
+            {upcomingTrainings.map((c: any) => (
+              <PendingTrainingCard key={c.id} completion={c} />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Quick actions */}

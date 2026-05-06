@@ -254,3 +254,32 @@ export async function demoteMember(groupId: string, userId: string) {
   revalidatePath(`/groups/${groupId}`)
   return { success: true }
 }
+export async function getGroupActivity(groupId: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { scheduled: [], activity: [] }
+
+  const [scheduledRes, activityRes] = await Promise.all([
+    supabase
+      .from('scheduled_trainings')
+      .select('scheduled_date, id, modality, objective')
+      .eq('group_id', groupId)
+      .order('scheduled_date', { ascending: true }),
+    supabase
+      .from('training_sessions')
+      .select('session_date, user_id, total_arrows, profiles(full_name)')
+      .in('user_id',
+        (await supabase
+          .from('group_members')
+          .select('user_id')
+          .eq('group_id', groupId)
+        ).data?.map((m: any) => m.user_id) ?? []
+      )
+      .order('session_date', { ascending: true }),
+  ])
+
+  return {
+    scheduled: scheduledRes.data ?? [],
+    activity: activityRes.data ?? [],
+  }
+}

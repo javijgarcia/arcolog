@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, UserMinus } from 'lucide-react'
+import { LogOut, UserMinus, Trash2 } from 'lucide-react'
 import { leaveGroup, removeMember } from '@/lib/actions/groups'
 import { promoteMember, demoteMember } from '@/lib/actions/groups'
 
@@ -111,6 +111,31 @@ export function DemoteMemberButton({ groupId, userId, memberName }: { groupId: s
       className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
     >
       <span className="text-sm">⬇️</span>
+    </button>
+ )
+}
+
+export function DeleteScheduledButton({ trainingId, groupId }: { trainingId: string; groupId: string }) {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+  async function handleDelete() {
+    if (!confirm('¿Eliminar este entrenamiento programado?')) return
+    setLoading(true)
+    const { deleteScheduledTraining } = await import('@/lib/actions/scheduled')
+    await deleteScheduledTraining(trainingId, groupId)
+    router.refresh()
+    setLoading(false)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleDelete}
+      disabled={loading}
+      className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+    >
+      <Trash2 className="w-4 h-4" />
     </button>
   )
 }

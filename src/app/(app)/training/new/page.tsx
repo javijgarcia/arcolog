@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 import { createTrainingSession } from '@/lib/actions/training'
@@ -19,7 +19,7 @@ export default function NewTrainingPage() {
   const [seriesCount, setSeriesCount] = useState(2)
   const [dianaCount, setDianaCount] = useState(24)
   const [ends, setEnds] = useState<SessionEndForm[]>([])
-  const [controlMode, setControlMode] = useState(true)
+  const [controlMode, setControlMode] = useState(false)
   const [freeArrows, setFreeArrows] = useState<number | ''>('')
   const [freeScore, setFreeScore] = useState<number | ''>('')
   const [loadingTemplate, setLoadingTemplate] = useState(false)
@@ -73,6 +73,26 @@ export default function NewTrainingPage() {
     }
     setLoadingTemplate(false)
   }
+  
+  // Cargar datos de entrenamiento programado si viene de la URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const modality = params.get('modality') as Modality | null
+    const distance = params.get('distance')
+    const objective = params.get('objective')
+
+    if (modality && Object.keys(MODALITY_CONFIG).includes(modality)) {
+      handleModalityChange(modality)
+    }
+    if (objective && formRef.current) {
+      const objectiveInput = formRef.current.querySelector<HTMLInputElement>('[name="objective"]')
+      if (objectiveInput) objectiveInput.value = decodeURIComponent(objective)
+    }
+    if (distance && formRef.current) {
+      const distanceInput = formRef.current.querySelector<HTMLInputElement>('[name="distance_meters"]')
+      if (distanceInput) distanceInput.value = distance
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()

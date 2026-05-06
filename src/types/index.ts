@@ -320,3 +320,28 @@ export interface GroupMember {
   joined_at: string
   profiles?: Profile
 }
+export interface ScheduledTraining {
+  id: string
+  group_id: string
+  created_by: string
+  scheduled_date: string
+  modality: Modality | null
+  distance_meters: number | null
+  objective: string | null
+  notes: string | null
+  created_at: string
+  scheduled_training_completions?: ScheduledTrainingCompletion[]
+}
+
+export type CompletionStatus = 'completado' | 'pendiente' | 'descartado'
+
+export interface ScheduledTrainingCompletion {
+  id: string
+  scheduled_training_id: string
+  user_id: string
+  session_id: string | null
+  status: CompletionStatus
+  completed_at: string | null
+  created_at: string
+  profiles?: Profile
+}

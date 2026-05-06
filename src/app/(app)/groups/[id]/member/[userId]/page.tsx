@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getGroupDetail } from '@/lib/actions/groups'
 import { ProgressChart } from '@/components/progress/ProgressChart'
+import { ArrowsChart } from '@/components/progress/ArrowsChart'
 import { ChevronLeft, Target, Trophy, TrendingUp, Calendar } from 'lucide-react'
 import { formatDate, feelingEmoji } from '@/lib/utils'
 import { MODALITY_LABELS } from '@/types'
@@ -17,7 +18,6 @@ export default async function MemberProfilePage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()
 
-  // Verificar que el usuario es miembro del grupo
   const group = await getGroupDetail(params.id)
   if (!group) notFound()
 
@@ -25,7 +25,6 @@ export default async function MemberProfilePage({
   const isMember = members.some((m: any) => m.user_id === user.id)
   if (!isMember) notFound()
 
-  // Obtener perfil del miembro — sin bloquear si RLS no lo permite
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
@@ -42,7 +41,6 @@ export default async function MemberProfilePage({
     updated_at: '',
   }
 
-  // Obtener datos del miembro
   const [sessionsRes, competitionsRes] = await Promise.all([
     supabase
       .from('training_sessions')
@@ -85,6 +83,22 @@ export default async function MemberProfilePage({
   const progressData = [...trainingPoints, ...competitionPoints].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
+
+  // Calcular flechas por mes
+  const monthMap: Record<string, number> = {}
+  for (const s of sessions) {
+    const month = s.session_date.slice(0, 7)
+    monthMap[month] = (monthMap[month] ?? 0) + (s.total_arrows ?? 0)
+  }
+  const arrowsByMonth = Object.entries(monthMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, total]) => ({
+      month,
+      label: new Date(month + '-01').toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
+      training: total,
+      competition: 0,
+      total,
+    }))
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -137,6 +151,13 @@ export default async function MemberProfilePage({
         <div className="card p-6">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Progreso</h2>
           <ProgressChart data={progressData} />
+        </div>
+      )}
+
+      {arrowsByMonth.length > 0 && (
+        <div className="card p-6">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Flechas por mes</h2>
+          <ArrowsChart data={arrowsByMonth} />
         </div>
       )}
 

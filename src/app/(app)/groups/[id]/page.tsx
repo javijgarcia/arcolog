@@ -5,7 +5,14 @@ import { Users, Copy, Trash2, LogOut, TrendingUp, Target, Trophy } from 'lucide-
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { CopyButton } from './CopyButton'
-import { LeaveGroupButton, RemoveMemberButton, PromoteMemberButton, DemoteMemberButton } from './GroupActions'
+import { getScheduledTrainings } from '@/lib/actions/scheduled'
+import { ScheduleForm } from './ScheduleForm'
+import { MODALITY_LABELS } from '@/types'
+import { formatDate } from '@/lib/utils'
+import { Trash2 as TrashIcon } from 'lucide-react'
+import { LeaveGroupButton, RemoveMemberButton, PromoteMemberButton, DemoteMemberButton, DeleteScheduledButton } from './GroupActions'
+import { getGroupActivity } from '@/lib/actions/groups'
+import { GroupCalendar } from './GroupCalendar'
 
 export const metadata: Metadata = { title: 'Grupo' }
 
@@ -17,8 +24,12 @@ export default async function GroupDetailPage({ params }: { params: { id: string
   const group = await getGroupDetail(params.id)
   if (!group) notFound()
 
-  const isOwner = group.owner_id === user.id
+const isOwner = group.owner_id === user.id
   const members = group.group_members ?? []
+ const [scheduledTrainings, groupActivity] = await Promise.all([
+    getScheduledTrainings(params.id),
+    getGroupActivity(params.id),
+  ])
 
   // Obtener stats de cada miembro
   const memberStats = await Promise.all(
@@ -156,6 +167,73 @@ export default async function GroupDetailPage({ params }: { params: { id: string
             )}
           </div>
         ))}
+      </div>
+	  {/* Entrenamientos programados */}
+      <div className="space-y-3">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+		{/* Calendario del grupo */}
+      <div className="card p-5 space-y-4">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">Calendario del grupo</h2>
+        <GroupCalendar
+          scheduled={groupActivity.scheduled}
+          activity={groupActivity.activity}
+        />
+      </div>
+          Entrenamientos programados
+        </h2>
+
+        {isOwner && <ScheduleForm groupId={group.id} />}
+
+        {scheduledTrainings.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-6">
+            No hay entrenamientos programados
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {scheduledTrainings.map((t: any) => {
+              const completions = t.scheduled_training_completions ?? []
+              const completed = completions.filter((c: any) => c.status === 'completado').length
+              const pending = completions.filter((c: any) => c.status === 'pendiente').length
+              const discarded = completions.filter((c: any) => c.status === 'descartado').length
+
+              return (
+                <div key={t.id} className="card p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium text-slate-900 dark:text-white">
+                          {formatDate(t.scheduled_date)}
+                        </p>
+                        {t.modality && (
+                          <span className="badge-blue text-xs">
+                            {MODALITY_LABELS[t.modality as keyof typeof MODALITY_LABELS]}
+                          </span>
+                        )}
+                      </div>
+                      {t.objective && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.objective}</p>
+                      )}
+                      {t.notes && (
+                        <p className="text-xs text-slate-400 mt-1">{t.notes}</p>
+                      )}
+                    </div>
+                    {isOwner && (
+                      <DeleteScheduledButton trainingId={t.id} groupId={group.id} />
+                    )}
+                  </div>
+
+                  {completions.length > 0 && (
+                    <div className="flex gap-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <span className="text-xs text-green-600 dark:text-green-400">✅ {completed} completados</span>
+                      <span className="text-xs text-amber-600 dark:text-amber-400">⏳ {pending} pendientes</span>
+                      {discarded > 0 && <span className="text-xs text-slate-400">❌ {discarded} descartados</span>}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
