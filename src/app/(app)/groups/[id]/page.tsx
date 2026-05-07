@@ -13,6 +13,8 @@ import { Trash2 as TrashIcon } from 'lucide-react'
 import { LeaveGroupButton, RemoveMemberButton, PromoteMemberButton, DemoteMemberButton, DeleteScheduledButton } from './GroupActions'
 import { getGroupActivity } from '@/lib/actions/groups'
 import { GroupCalendar } from './GroupCalendar'
+import { GroupRanking } from './GroupRanking'
+import { GroupComparison } from './GroupComparison'
 
 export const metadata: Metadata = { title: 'Grupo' }
 
@@ -178,6 +180,16 @@ const isOwner = group.owner_id === user.id
           scheduled={groupActivity.scheduled}
           activity={groupActivity.activity}
         />
+      </div>
+	  {/* Ranking del grupo */}
+      <div className="card p-5 space-y-4">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">🏆 Ranking del grupo</h2>
+        <GroupRanking groupId={group.id} />
+      </div>
+	  {/* Comparativa entre miembros */}
+      <div className="card p-5 space-y-4">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">📊 Comparativa de progreso</h2>
+        <GroupComparison groupId={group.id} />
       </div>
           Entrenamientos programados
         </h2>

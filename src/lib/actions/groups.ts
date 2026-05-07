@@ -280,6 +280,167 @@ export async function getGroupActivity(groupId: string) {
 
   return {
     scheduled: scheduledRes.data ?? [],
-    activity: activityRes.data ?? [],
+      activity: activityRes.data ?? [],
   }
+}
+
+  export async function getGroupRanking(groupId: string, period: 'semana' | 'mes' | 'año') {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const now = new Date()
+  let fromDate: string
+
+  if (period === 'semana') {
+    const d = new Date(now)
+    d.setDate(d.getDate() - 7)
+    fromDate = d.toISOString().split('T')[0]
+  } else if (period === 'mes') {
+    const d = new Date(now)
+    d.setMonth(d.getMonth() - 1)
+    fromDate = d.toISOString().split('T')[0]
+  } else {
+    const d = new Date(now)
+    d.setFullYear(d.getFullYear() - 1)
+    fromDate = d.toISOString().split('T')[0]
+  }
+
+  // Obtener miembros del grupo
+  const { data: members } = await supabase
+    .from('group_members')
+    .select('user_id, role, profiles(full_name, bow_type)')
+    .eq('group_id', groupId)
+
+  if (!members) return []
+
+  // Obtener sesiones de cada miembro en el periodo
+  const memberIds = members.map((m: any) => m.user_id)
+
+  const [sessionsRes, competitionsRes] = await Promise.all([
+    supabase
+      .from('training_sessions')
+      .select('user_id, total_arrows, session_date, session_ends(score)')
+      .in('user_id', memberIds)
+      .gte('session_date', fromDate),
+    supabase
+      .from('competition_scores')
+      .select('user_id, total_score, competition_date')
+      .in('user_id', memberIds)
+      .gte('competition_date', fromDate),
+  ])
+
+  const sessions = sessionsRes.data ?? []
+  const competitions = competitionsRes.data ?? []
+
+  return members.map((m: any) => {
+    const memberSessions = sessions.filter(s => s.user_id === m.user_id)
+    const memberCompetitions = competitions.filter(c => c.user_id === m.user_id)
+
+    const totalArrows = memberSessions.reduce((sum, s) => sum + (s.total_arrows ?? 0), 0)
+    const totalSessions = memberSessions.length
+
+    const scores = memberSessions
+      .filter(s => s.session_ends && s.session_ends.length > 0)
+      .map(s => (s.session_ends as {score:number}[]).reduce((sum, e) => sum + e.score, 0))
+
+    const avgScore = scores.length > 0
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : 0
+
+    const personalBest = memberCompetitions.length
+      ? Math.max(...memberCompetitions.map(c => c.total_score))
+      : 0
+
+    // Calcular racha
+    const dates = [...new Set(memberSessions.map(s => s.session_date))].sort((a, b) => b.localeCompare(a))
+    let streak = 0
+    const today = new Date().toISOString().split('T')[0]
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    if (dates[0] === today || dates[0] === yesterday) {
+      streak = 1
+      for (let i = 1; i < dates.length; i++) {
+        const prev = new Date(dates[i - 1])
+        const curr = new Date(dates[i])
+        const diff = Math.round((prev.getTime() - curr.getTime()) / 86400000)
+        if (diff === 1) streak++
+        else break
+      }
+    }
+
+    return {
+      user_id: m.user_id,
+      full_name: (m.profiles as any)?.full_name ?? 'Arquero',
+      bow_type: (m.profiles as any)?.bow_type ?? null,
+      role: m.role,
+      totalArrows,
+      totalSessions,
+      avgScore,
+      personalBest,
+      streak,
+    }
+  })
+}
+export async function getGroupProgressComparison(groupId: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data: members } = await supabase
+    .from('group_members')
+    .select('user_id, profiles(full_name)')
+    .eq('group_id', groupId)
+    .in('role', ['arquero', 'entrenador'])
+
+  if (!members) return []
+
+  const memberIds = members.map((m: any) => m.user_id)
+
+ const [sessionsRes, competitionsRes] = await Promise.all([
+    supabase
+      .from('training_sessions')
+      .select('user_id, session_date, total_arrows, session_ends(score)')
+      .in('user_id', memberIds)
+      .order('session_date', { ascending: true })
+      .limit(200),
+    supabase
+      .from('competition_scores')
+      .select('user_id, competition_date, total_score')
+      .in('user_id', memberIds)
+      .order('competition_date', { ascending: true }),
+  ])
+
+  const sessions = sessionsRes.data ?? []
+  const competitions = competitionsRes.data ?? []
+
+  return members.map((m: any) => {
+    const memberSessions = sessions
+      .filter(s => s.user_id === m.user_id)
+      .map(s => {
+        const endsScore = s.session_ends && s.session_ends.length > 0
+          ? (s.session_ends as {score:number}[]).reduce((sum, e) => sum + e.score, 0)
+          : null
+        return {
+          date: s.session_date,
+          score: endsScore,
+        }
+      })
+      .filter(s => s.score !== null && s.score > 0)
+
+    const memberCompetitions = competitions
+      .filter(c => c.user_id === m.user_id)
+      .map(c => ({
+        date: c.competition_date,
+        score: c.total_score,
+      }))
+
+    const allPoints = [...memberSessions, ...memberCompetitions]
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    return {
+      user_id: m.user_id,
+      full_name: (m.profiles as any)?.full_name ?? 'Arquero',
+      sessions: allPoints,
+    }
+  })
 }
