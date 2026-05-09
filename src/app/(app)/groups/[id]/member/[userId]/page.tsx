@@ -170,7 +170,7 @@ export default async function MemberProfilePage({
             {sessions.slice(0, 10).map((s: any) => {
               const totalScore = (s.session_ends ?? []).reduce((sum: number, e: any) => sum + e.score, 0)
               return (
-                <div key={s.id} className="flex items-center gap-4 px-5 py-3.5">
+                <Link key={s.id} href={`/groups/${params.id}/member/${params.userId}/session/${s.id}`} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                   <div className="text-xl">{feelingEmoji(s.feeling_score)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900 dark:text-white">{formatDate(s.session_date)}</p>
@@ -183,7 +183,7 @@ export default async function MemberProfilePage({
                   {totalScore > 0 && (
                     <p className="font-bold text-slate-900 dark:text-white">{totalScore}</p>
                   )}
-                </div>
+                </Link>
               )
             })}
           </div>

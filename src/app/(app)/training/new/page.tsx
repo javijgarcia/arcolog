@@ -22,6 +22,7 @@ export default function NewTrainingPage() {
   const [controlMode, setControlMode] = useState(false)
   const [freeArrows, setFreeArrows] = useState<number | ''>('')
   const [freeScore, setFreeScore] = useState<number | ''>('')
+  const [extraArrows, setExtraArrows] = useState<number | ''>('')
   const [loadingTemplate, setLoadingTemplate] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -32,7 +33,9 @@ export default function NewTrainingPage() {
     : config.endsPerSeries * seriesCount * config.arrowsPerEnd * config.maxScore
 
   const totalScore = controlMode ? ends.reduce((s, e) => s + e.score, 0) : Number(freeScore) || 0
-  const totalArrows = controlMode ? ends.reduce((s, e) => s + e.arrows, 0) : Number(freeArrows) || 0
+  const totalArrows = controlMode
+    ? ends.reduce((s, e) => s + e.arrows, 0) + (Number(extraArrows) || 0)
+    : Number(freeArrows) || 0
   const avgPerArrow = totalArrows > 0 ? (totalScore / totalArrows).toFixed(2) : '—'
   const percentage = maxScore > 0 && controlMode ? Math.round((totalScore / maxScore) * 100) : null
   const currentEndNumber = ends.length + 1
@@ -73,16 +76,15 @@ export default function NewTrainingPage() {
     }
     setLoadingTemplate(false)
   }
-  
-  // Cargar datos de entrenamiento programado si viene de la URL
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const modality = params.get('modality') as Modality | null
+    const mod = params.get('modality') as Modality | null
     const distance = params.get('distance')
     const objective = params.get('objective')
 
-    if (modality && Object.keys(MODALITY_CONFIG).includes(modality)) {
-      handleModalityChange(modality)
+    if (mod && Object.keys(MODALITY_CONFIG).includes(mod)) {
+      handleModalityChange(mod)
     }
     if (objective && formRef.current) {
       const objectiveInput = formRef.current.querySelector<HTMLInputElement>('[name="objective"]')
@@ -114,6 +116,7 @@ export default function NewTrainingPage() {
       feeling_score: Number(fd.get('feeling_score')),
       weather: fd.get('weather') as Weather,
       notes: fd.get('notes') as string,
+      extra_arrows: Number(extraArrows) || 0,
       ends: controlMode ? ends : freeArrows ? [{
         end_number: 1,
         arrows: Number(freeArrows),
@@ -141,7 +144,6 @@ export default function NewTrainingPage() {
 
       <form onSubmit={handleSubmit} ref={formRef} className="space-y-6">
 
-        {/* Botón plantilla */}
         <button
           type="button"
           onClick={loadLastSession}
@@ -151,7 +153,6 @@ export default function NewTrainingPage() {
           {loadingTemplate ? 'Cargando...' : '🔄 Repetir último entreno'}
         </button>
 
-        {/* Toggle Control */}
         <div className="card p-4 flex items-center justify-between">
           <div>
             <p className="font-medium text-slate-900 dark:text-white">Modo control</p>
@@ -172,7 +173,6 @@ export default function NewTrainingPage() {
           </button>
         </div>
 
-        {/* Modalidad */}
         <div className="card p-6 space-y-4">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">Modalidad</h2>
 
@@ -281,7 +281,6 @@ export default function NewTrainingPage() {
           </div>
         </div>
 
-        {/* Tandas — Modo Control */}
         {controlMode && (
           <div className="card p-6 space-y-5">
             <div className="flex items-center justify-between">
@@ -341,10 +340,24 @@ export default function NewTrainingPage() {
                 </p>
               </div>
             )}
+
+            {sessionComplete && (
+              <div>
+                <label className="label">Flechas adicionales <span className="text-slate-400 font-normal">(opcional)</span></label>
+                <input
+                  type="number"
+                  min={0}
+                  value={extraArrows}
+                  onChange={e => setExtraArrows(e.target.value ? Number(e.target.value) : '')}
+                  className="input"
+                  placeholder="Flechas tiradas fuera del control"
+                />
+                <p className="text-xs text-slate-400 mt-1">Solo cuentan para el volumen total, no para la puntuación</p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Modo Libre */}
         {!controlMode && (
           <div className="card p-6 space-y-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Resumen del entreno</h2>

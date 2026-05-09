@@ -165,6 +165,7 @@ export interface TrainingSessionForm {
   feeling_score: number
   weather: Weather
   notes: string
+  extra_arrows?: number
   ends: SessionEndForm[]
 }
 

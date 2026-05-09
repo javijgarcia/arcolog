@@ -24,24 +24,6 @@ export async function createCompetitionScore(data: CompetitionScoreForm) {
   redirect('/competitions/history')
 }
 
-export async function updateCompetitionScore(id: string, data: Partial<CompetitionScoreForm>) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) return { error: 'No autenticado' }
-
-  const { error } = await supabase
-    .from('competition_scores')
-    .update({ ...data, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('user_id', user.id)
-
-  if (error) return { error: error.message }
-
-  revalidatePath('/competitions/history')
-  revalidatePath('/progress')
-  redirect('/competitions/history')
-}
 
 export async function deleteCompetitionScore(id: string) {
   const supabase = await createServerSupabaseClient()
@@ -76,4 +58,22 @@ export async function getCompetitionScores() {
 
   if (error) return []
   return data
+}
+
+export async function updateCompetitionScore(id: string, data: Partial<CompetitionScoreForm>) {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return { error: 'No autenticado' }
+
+  const { error } = await supabase
+    .from('competition_scores')
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/competitions/history')
+  revalidatePath(`/competitions/${id}`)
+  return { success: true }
 }

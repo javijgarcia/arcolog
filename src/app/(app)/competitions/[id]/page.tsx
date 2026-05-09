@@ -7,6 +7,7 @@ import { formatDate } from '@/lib/utils'
 import { MODALITY_LABELS, COMPETITION_TYPE_LABELS } from '@/types'
 import { ChevronLeft, Trash2 } from 'lucide-react'
 import Link from 'next/link'
+import { EditCompetitionForm } from './EditCompetitionForm'
 
 export default async function CompetitionDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerSupabaseClient()
@@ -41,11 +42,14 @@ export default async function CompetitionDetailPage({ params }: { params: { id: 
             </p>
           </div>
         </div>
-        <form action={deleteCompetitionScore.bind(null, competition.id) as any}>
-          <button type="submit" className="btn-ghost p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </form>
+       <div className="flex gap-2">
+          <EditCompetitionForm competition={competition} />
+          <form action={deleteCompetitionScore.bind(null, competition.id) as any}>
+            <button type="submit" className="btn-ghost p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+              <Trash2 className="w-4 h-4" />
+            </button>
+         </form>
+        </div>
       </div>
 
       {/* Stats */}
