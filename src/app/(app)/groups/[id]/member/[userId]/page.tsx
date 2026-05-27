@@ -90,6 +90,7 @@ export default async function MemberProfilePage({
     const month = s.session_date.slice(0, 7)
     monthMap[month] = (monthMap[month] ?? 0) + (s.total_arrows ?? 0)
   }
+  
   const arrowsByMonth = Object.entries(monthMap)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([month, total]) => ({
@@ -196,8 +197,8 @@ export default async function MemberProfilePage({
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">Competiciones</h2>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {competitions.map((c: any) => (
-              <div key={c.id} className="flex items-center px-5 py-3 gap-3">
+           {competitions.map((c: any) => (
+              <Link key={c.id} href={`/groups/${params.id}/member/${params.userId}/competition/${c.id}`} className="flex items-center px-5 py-3 gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{c.competition_name}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{formatDate(c.competition_date)}</p>
@@ -205,7 +206,7 @@ export default async function MemberProfilePage({
                 <p className={`font-bold text-lg ${c.total_score === personalBest ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
                   {c.total_score}{c.total_score === personalBest ? ' 🏆' : ''}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

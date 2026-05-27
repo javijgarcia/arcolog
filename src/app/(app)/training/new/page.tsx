@@ -115,6 +115,10 @@ export default function NewTrainingPage() {
       objective: fd.get('objective') as string,
       feeling_score: Number(fd.get('feeling_score')),
       weather: fd.get('weather') as Weather,
+	  mental_concentration: fd.get('mental_concentration') ? Number(fd.get('mental_concentration')) : null,
+      mental_activation: fd.get('mental_activation') ? Number(fd.get('mental_activation')) : null,
+      mental_nerves: fd.get('mental_nerves') ? Number(fd.get('mental_nerves')) : null,
+      mental_notes: fd.get('mental_notes') as string,
       notes: fd.get('notes') as string,
       extra_arrows: Number(extraArrows) || 0,
       ends: controlMode ? ends : freeArrows ? [{
@@ -278,6 +282,39 @@ export default function NewTrainingPage() {
           <div>
             <label className="label">Notas (opcional)</label>
             <textarea name="notes" rows={2} className="input resize-none" placeholder="Observaciones, lesiones, ajustes al arco..." />
+          </div>
+        </div>
+
+        {/* Diario mental */}
+        <div className="card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">🧠 Diario mental</h2>
+            <span className="text-xs text-slate-400">Opcional</span>
+          </div>
+
+          {[
+            { name: 'mental_concentration', label: 'Concentración', emoji: ['😵', '😕', '😐', '🎯', '🔥'] },
+            { name: 'mental_activation', label: 'Activación', emoji: ['😴', '😑', '⚡', '💪', '🚀'] },
+            { name: 'mental_nerves', label: 'Nervios', emoji: ['😰', '😬', '😐', '😌', '😎'] },
+          ].map(field => (
+            <div key={field.name}>
+              <label className="label">{field.label}</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <label key={n} className="flex-1 cursor-pointer">
+                    <input type="radio" name={field.name} value={n} className="sr-only peer" />
+                    <div className="peer-checked:ring-2 peer-checked:ring-brand-500 peer-checked:bg-brand-50 dark:peer-checked:bg-brand-900/30 rounded-xl border border-slate-200 dark:border-slate-700 p-2 text-center text-lg transition-all hover:bg-slate-50 dark:hover:bg-slate-800">
+                      {field.emoji[n - 1]}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div>
+            <label className="label">Notas mentales (opcional)</label>
+            <textarea name="mental_notes" rows={2} className="input resize-none" placeholder="¿Cómo ha ido mentalmente? Pensamientos, distracciones..." />
           </div>
         </div>
 

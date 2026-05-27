@@ -16,10 +16,14 @@ export async function createTrainingSession(data: TrainingSessionForm) {
 
   const { data: session, error: sessionError } = await supabase
     .from('training_sessions')
-    .insert({
+   .insert({
       ...sessionData,
       user_id: user.id,
       total_arrows: ends.reduce((sum, e) => sum + e.arrows, 0) + (extra_arrows ?? 0),
+      mental_concentration: sessionData.mental_concentration || null,
+      mental_activation: sessionData.mental_activation || null,
+      mental_nerves: sessionData.mental_nerves || null,
+      mental_notes: sessionData.mental_notes || null,
     })
     .select()
     .single()

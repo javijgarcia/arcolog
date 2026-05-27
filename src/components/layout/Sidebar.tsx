@@ -5,10 +5,11 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   LayoutDashboard, PlusCircle, History, Trophy, TrendingUp,
-  UserCircle, Target, LogOut, Users, Medal, MoreHorizontal, X,
+  UserCircle, Target, LogOut, Users, Medal, MoreHorizontal, X, Bell,
 } from 'lucide-react'
 import { logout } from '@/lib/actions/auth'
 import { cn } from '@/lib/utils'
+import { NotificationBadge } from './NotificationBadge'
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -46,6 +47,7 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom */}
+	  <NotificationBadge />
       <div className="space-y-0.5 pt-4 border-t border-slate-200 dark:border-slate-800">
         <Link href="/profile" className={cn('nav-link', pathname === '/profile' && 'active')}>
           <UserCircle className="w-4 h-4 shrink-0" />
@@ -78,6 +80,7 @@ export function MobileBottomNav() {
     { href: '/competitions/new', icon: Trophy, label: 'Nueva comp.' },
     { href: '/competitions/history', icon: Trophy, label: 'Competiciones' },
     { href: '/achievements', icon: Medal, label: 'Logros' },
+    { href: '/notifications', icon: Bell, label: 'Avisos' },
     { href: '/profile', icon: UserCircle, label: 'Perfil' },
   ]
 

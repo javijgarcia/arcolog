@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createNotification } from '@/lib/actions/notifications'
 
 export async function createScheduledTraining(formData: FormData) {
   const supabase = await createServerSupabaseClient()
@@ -139,6 +140,43 @@ export async function updateCompletionStatus(
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }
+
+  if (status === 'completado') {
+    // Obtener datos del entrenamiento programado
+    const { data: completion } = await supabase
+      .from('scheduled_training_completions')
+      .select('*, scheduled_trainings(*, groups(owner_id, group_members(user_id, role)))')
+      .eq('id', completionId)
+      .single()
+
+    if (completion?.scheduled_trainings) {
+      const training = completion.scheduled_trainings as any
+      const group = training.groups
+
+      // Obtener nombre del arquero
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      const archerName = (profile as any)?.full_name ?? 'Un arquero'
+
+      // Notificar a todos los entrenadores del grupo
+      const entrenadores = (group?.group_members ?? []).filter((m: any) => m.role === 'entrenador')
+      for (const entrenador of entrenadores) {
+        if (entrenador.user_id !== user.id) {
+          await createNotification(
+            entrenador.user_id,
+            'training_completed',
+            '✅ Entrenamiento completado',
+            `${archerName} ha completado el entrenamiento del ${new Date(training.scheduled_date).toLocaleDateString('es-ES')}`,
+            { completionId, userId: user.id }
+          )
+        }
+      }
+    }
+  }
 
   revalidatePath('/dashboard')
   return { success: true }

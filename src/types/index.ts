@@ -105,6 +105,10 @@ export interface TrainingSession {
   objective: string | null
   feeling_score: number | null
   weather: Weather | null
+  mental_concentration: number | null
+  mental_activation: number | null
+  mental_nerves: number | null
+  mental_notes: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -139,8 +143,10 @@ export interface CompetitionScore {
   series_count: number | null
   diana_count: number | null
   notes: string | null
+  competition_ends?: CompetitionEnd[]
   created_at: string
   updated_at: string
+  ends_json?: string
 }
 
 export interface UserStats {
@@ -164,6 +170,10 @@ export interface TrainingSessionForm {
   objective: string
   feeling_score: number
   weather: Weather
+  mental_concentration: number | null
+  mental_activation: number | null
+  mental_nerves: number | null
+  mental_notes: string
   notes: string
   extra_arrows?: number
   ends: SessionEndForm[]
@@ -192,6 +202,10 @@ export interface CompetitionScoreForm {
   series_count: number | null
   diana_count: number | null
   notes: string
+  ends?: SessionEndForm[]
+  series_count?: number
+  diana_count?: number | null
+  use_control?: boolean
 }
 
 // ---- Chart data ----
@@ -345,4 +359,14 @@ export interface ScheduledTrainingCompletion {
   completed_at: string | null
   created_at: string
   profiles?: Profile
+}
+
+export interface CompetitionEnd {
+  id: string
+  competition_id: string
+  end_number: number
+  arrows: number
+  score: number
+  arrow_scores: string[]
+  created_at: string
 }

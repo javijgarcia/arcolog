@@ -153,6 +153,43 @@ export default async function TrainingSessionPage({ params }: { params: { id: st
           </div>
         ))}
       </div>
+	  
+	  {/* Diario mental */}
+      {(session.mental_concentration || session.mental_activation || session.mental_nerves || session.mental_notes) && (
+        <div className="card p-5 space-y-3">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">🧠 Diario mental</h2>
+          {session.mental_concentration && (
+            <div className="flex gap-4">
+              <span className="text-sm text-slate-500 dark:text-slate-400 w-32 shrink-0">Concentración</span>
+              <span className="text-sm text-slate-900 dark:text-white">
+                {'⭐'.repeat(session.mental_concentration)} ({session.mental_concentration}/5)
+              </span>
+            </div>
+          )}
+          {session.mental_activation && (
+            <div className="flex gap-4">
+              <span className="text-sm text-slate-500 dark:text-slate-400 w-32 shrink-0">Activación</span>
+              <span className="text-sm text-slate-900 dark:text-white">
+                {'⭐'.repeat(session.mental_activation)} ({session.mental_activation}/5)
+              </span>
+            </div>
+          )}
+          {session.mental_nerves && (
+            <div className="flex gap-4">
+              <span className="text-sm text-slate-500 dark:text-slate-400 w-32 shrink-0">Nervios</span>
+              <span className="text-sm text-slate-900 dark:text-white">
+                {'⭐'.repeat(session.mental_nerves)} ({session.mental_nerves}/5)
+              </span>
+            </div>
+          )}
+          {session.mental_notes && (
+            <div className="flex gap-4">
+              <span className="text-sm text-slate-500 dark:text-slate-400 w-32 shrink-0">Notas</span>
+              <span className="text-sm text-slate-900 dark:text-white">{session.mental_notes}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tandas con colores */}
       {ends.length > 0 && (
