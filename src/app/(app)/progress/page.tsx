@@ -5,6 +5,7 @@ import { ProgressChart } from '@/components/progress/ProgressChart'
 import { ArrowsChart } from '@/components/progress/ArrowsChart'
 import { TrendingUp, Target, Trophy, Zap } from 'lucide-react'
 import type { Metadata } from 'next'
+import { ExportButton } from '@/components/ui/ExportButton'
 
 export const metadata: Metadata = { title: 'Progreso' }
 
@@ -65,11 +66,14 @@ export default async function ProgressPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <div>
-        <h1>Mi progreso</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Evolución de tus puntuaciones de entrenamiento y competición
-        </p>
+     <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1>Mi progreso</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Evolución de tus puntuaciones de entrenamiento y competición
+          </p>
+        </div>
+        <ExportButton type="personal" label="Exportar" />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

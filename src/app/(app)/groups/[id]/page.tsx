@@ -15,6 +15,7 @@ import { getGroupActivity } from '@/lib/actions/groups'
 import { GroupCalendar } from './GroupCalendar'
 import { GroupRanking } from './GroupRanking'
 import { GroupComparison } from './GroupComparison'
+import { ExportButton } from '@/components/ui/ExportButton'
 
 export const metadata: Metadata = { title: 'Grupo' }
 
@@ -60,6 +61,13 @@ const isOwner = group.owner_id === user.id
           )}
         </div>
       </div>
+	  
+	  {/* Exportar datos del grupo */}
+      {isOwner && (
+        <div className="flex justify-end">
+          <ExportButton type="group" groupId={group.id} label="Exportar grupo" />
+        </div>
+      )}
 
       {/* Código de invitación (solo entrenador) */}
       {isOwner && (

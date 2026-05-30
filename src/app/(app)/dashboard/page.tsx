@@ -7,16 +7,18 @@ import type { Metadata } from 'next'
 import { TrainingHeatmap } from '@/components/progress/TrainingHeatmap'
 import { getMyPendingTrainings, getMyUpcomingTrainings } from '@/lib/actions/scheduled'
 import { PendingTrainingCard } from '@/components/training/PendingTrainingCard'
+import { getInactiveMembers } from '@/lib/actions/groups'
 
 export const metadata: Metadata = { title: 'Inicio' }
 
 export default async function DashboardPage() {
- const [stats, profile, allSessions, pendingTrainings, upcomingTrainings] = await Promise.all([
+ const [stats, profile, allSessions, pendingTrainings, upcomingTrainings, inactiveMembers] = await Promise.all([
     getDashboardStats(),
     getProfile(),
     getTrainingSessions(),
     getMyPendingTrainings(),
     getMyUpcomingTrainings(),
+    getInactiveMembers(),
   ])
   const firstName = profile?.full_name?.split(' ')[0] ?? 'Arquero'
 
@@ -133,6 +135,33 @@ export default async function DashboardPage() {
         </section>
       )}
 
+{/* Arqueros inactivos esta semana */}
+      {inactiveMembers.length > 0 && (
+        <section>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
+            ⚠️ Sin entrenar esta semana
+          </h2>
+          <div className="card divide-y divide-slate-100 dark:divide-slate-800">
+            {inactiveMembers.map((m: any) => (
+              <Link
+                key={`${m.group_id}-${m.user_id}`}
+                href={`/groups/${m.group_id}/member/${m.user_id}`}
+                className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                  <span className="text-sm">🏹</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{m.full_name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{m.group_name}</p>
+                </div>
+                <span className="text-xs text-amber-600 dark:text-amber-400">Sin entreno</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+	  
       {/* Quick actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Link href="/training/new" className="card p-5 hover:shadow-md transition-shadow group flex items-center gap-4">

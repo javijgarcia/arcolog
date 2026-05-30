@@ -442,5 +442,55 @@ export async function getGroupProgressComparison(groupId: string) {
       full_name: (m.profiles as any)?.full_name ?? 'Arquero',
       sessions: allPoints,
     }
-  })
+ })
+}
+
+export async function getInactiveMembers() {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  const weekAgoStr = weekAgo.toISOString().split('T')[0]
+
+  // Obtener grupos donde el usuario es entrenador
+  const { data: myGroups } = await supabase
+    .from('group_members')
+    .select('group_id, groups(name)')
+    .eq('user_id', user.id)
+    .eq('role', 'entrenador')
+
+  if (!myGroups || myGroups.length === 0) return []
+
+  const groupIds = myGroups.map((g: any) => g.group_id)
+
+  // Obtener todos los arqueros de esos grupos
+  const { data: members } = await supabase
+    .from('group_members')
+    .select('user_id, group_id, profiles(full_name), groups(name)')
+    .in('group_id', groupIds)
+    .eq('role', 'arquero')
+
+  if (!members) return []
+
+  // Obtener arqueros que SÍ han entrenado esta semana
+  const memberIds = members.map((m: any) => m.user_id)
+  const { data: activeSessions } = await supabase
+    .from('training_sessions')
+    .select('user_id')
+    .in('user_id', memberIds)
+    .gte('session_date', weekAgoStr)
+
+  const activeIds = new Set((activeSessions ?? []).map(s => s.user_id))
+
+  // Filtrar los que NO han entrenado
+  return members
+    .filter((m: any) => !activeIds.has(m.user_id))
+    .map((m: any) => ({
+      user_id: m.user_id,
+      full_name: (m.profiles as any)?.full_name ?? 'Arquero',
+      group_name: (m.groups as any)?.name ?? '',
+      group_id: m.group_id,
+    }))
 }

@@ -37,31 +37,56 @@ export function ExportButton({ type, groupId, label = 'Exportar' }: Props) {
 
     const wb = XLSX.utils.book_new()
 
-    // Hoja de sesiones
-    const sessionsData = data.sessions.map((s: any) => {
-      const totalScore = (s.session_ends ?? []).reduce((sum: number, e: any) => sum + e.score, 0)
-      const memberName = data.members
-        ? data.members.find((m: any) => m.user_id === s.user_id)?.profiles?.full_name ?? 'Arquero'
-        : data.profile?.full_name ?? ''
+   // Agrupar sesiones por arquero
+    if (data.members) {
+      for (const member of data.members) {
+        const memberName = (member as any).profiles?.full_name ?? 'Arquero'
+        const memberSessions = data.sessions.filter((s: any) => s.user_id === member.user_id)
+        if (memberSessions.length === 0) continue
 
-      return {
-        'Fecha': s.session_date,
-        'Arquero': memberName,
-        'Modalidad': s.modality ?? '—',
-        'Distancia (m)': s.distance_meters > 0 ? s.distance_meters : '—',
-        'Flechas': s.total_arrows,
-        'Puntuación': totalScore || '—',
-        'Sensación': s.feeling_score ?? '—',
-        'Objetivo': s.objective ?? '—',
-        'Notas': s.notes ?? '—',
-        'Concentración': s.mental_concentration ?? '—',
-        'Activación': s.mental_activation ?? '—',
-        'Nervios': s.mental_nerves ?? '—',
+        const memberData = memberSessions.map((s: any) => {
+          const totalScore = (s.session_ends ?? []).reduce((sum: number, e: any) => sum + e.score, 0)
+          return {
+            'Fecha': s.session_date,
+            'Modalidad': s.modality ?? '—',
+            'Distancia (m)': s.distance_meters > 0 ? s.distance_meters : '—',
+            'Flechas': s.total_arrows,
+            'Puntuación': totalScore || '—',
+            'Sensación': s.feeling_score ?? '—',
+            'Objetivo': s.objective ?? '—',
+            'Concentración': s.mental_concentration ?? '—',
+            'Activación': s.mental_activation ?? '—',
+            'Nervios': s.mental_nerves ?? '—',
+            'Notas': s.notes ?? '—',
+          }
+        })
+
+        const ws = XLSX.utils.json_to_sheet(memberData)
+        const sheetName = memberName.substring(0, 31)
+        XLSX.utils.book_append_sheet(wb, ws, sheetName)
       }
-    })
-
-    const wsS = XLSX.utils.json_to_sheet(sessionsData)
-    XLSX.utils.book_append_sheet(wb, wsS, 'Entrenamientos')
+    } else {
+      const sessionsData = data.sessions.map((s: any) => {
+        const totalScore = (s.session_ends ?? []).reduce((sum: number, e: any) => sum + e.score, 0)
+        return {
+          'Fecha': s.session_date,
+          'Modalidad': s.modality ?? '—',
+          'Distancia (m)': s.distance_meters > 0 ? s.distance_meters : '—',
+          'Flechas': s.total_arrows,
+          'Puntuación': totalScore || '—',
+          'Sensación': s.feeling_score ?? '—',
+          'Objetivo': s.objective ?? '—',
+          'Concentración': s.mental_concentration ?? '—',
+          'Activación': s.mental_activation ?? '—',
+          'Nervios': s.mental_nerves ?? '—',
+          'Notas': s.notes ?? '—',
+        }
+      })
+      const wsS = XLSX.utils.json_to_sheet(sessionsData)
+      XLSX.utils.book_append_sheet(wb, wsS, 'Entrenamientos')
+    }
+	
+     
 
     // Hoja de competiciones
     const competitionsData = data.competitions.map((c: any) => {
