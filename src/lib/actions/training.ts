@@ -31,7 +31,7 @@ export async function createTrainingSession(data: TrainingSessionForm) {
   if (sessionError) return { error: sessionError.message }
 
   if (ends.length > 0) {
-    const { error: endsError } = await supabase
+   const { error: endsError } = await supabase
       .from('session_ends')
       .insert(ends.map(e => ({
         session_id: session.id,
@@ -39,6 +39,8 @@ export async function createTrainingSession(data: TrainingSessionForm) {
         arrows: e.arrows,
         score: e.score,
         arrow_scores: e.arrow_scores,
+        impact_x: e.impacts ? e.impacts.map(i => i.x) : null,
+        impact_y: e.impacts ? e.impacts.map(i => i.y) : null,
       })))
 
     if (endsError) return { error: endsError.message }

@@ -9,6 +9,7 @@ import {
   MODALITY_LABELS, MODALITY_CONFIG, WEATHER_LABELS, FEELING_LABELS,
 } from '@/types'
 import type { Modality, Weather, SessionEndForm } from '@/types'
+import { ArcheryTarget } from '@/components/training/ArcheryTarget'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -25,6 +26,7 @@ export default function NewTrainingPage() {
   const [extraArrows, setExtraArrows] = useState<number | ''>('')
   const [loadingTemplate, setLoadingTemplate] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const [dianaMode, setDianaMode] = useState(false)
 
   const config = MODALITY_CONFIG[modality]
   const totalEndsExpected = config.hasDianas ? dianaCount : config.endsPerSeries * seriesCount
@@ -176,6 +178,28 @@ export default function NewTrainingPage() {
             }`} />
           </button>
         </div>
+
+{controlMode && (
+          <div className="card p-4 flex items-center justify-between">
+            <div>
+              <p className="font-medium text-slate-900 dark:text-white">Modo diana</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Marca cada impacto directamente en la diana
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setDianaMode(!dianaMode); setEnds([]) }}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                dianaMode ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'
+              }`}
+            >
+              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                dianaMode ? 'translate-x-7' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+        )}
 
         <div className="card p-6 space-y-4">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">Modalidad</h2>
@@ -363,12 +387,27 @@ export default function NewTrainingPage() {
               </div>
             )}
 
-            {!sessionComplete ? (
-              <ScoreBoard
-                modality={modality}
-                endNumber={currentEndNumber}
-                onEndComplete={handleEndComplete}
-              />
+           {!sessionComplete ? (
+              dianaMode ? (
+                <ArcheryTarget
+                  modality={modality}
+                  endNumber={currentEndNumber}
+                  arrowsPerEnd={config.arrowsPerEnd}
+                  onEndComplete={(end) => handleEndComplete({
+                    end_number: end.end_number,
+                    arrows: end.arrows,
+                    score: end.score,
+                    arrow_scores: end.arrow_scores,
+                    impacts: end.impacts,
+                  })}
+                />
+              ) : (
+                <ScoreBoard
+                  modality={modality}
+                  endNumber={currentEndNumber}
+                  onEndComplete={handleEndComplete}
+                />
+			  )
             ) : (
               <div className="text-center py-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
                 <p className="text-green-700 dark:text-green-400 font-medium">✅ Sesión completa</p>

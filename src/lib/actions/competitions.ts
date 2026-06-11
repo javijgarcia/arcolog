@@ -26,13 +26,15 @@ export async function createCompetitionScore(data: CompetitionScoreForm) {
  const endsArray = ends_json ? JSON.parse(ends_json as string) : (ends ?? [])
   if (use_control && endsArray.length > 0) {
     await supabase.from('competition_ends').insert(
-      endsArray.map((e: any) => ({
-        competition_id: competition.id,
-        end_number: e.end_number,
-        arrows: e.arrows,
-        score: e.score,
-        arrow_scores: e.arrow_scores,
-      }))
+    endsArray.map((e: any) => ({
+          competition_id: competition.id,
+          end_number: e.end_number,
+          arrows: e.arrows,
+          score: e.score,
+          arrow_scores: Array.isArray(e.arrow_scores) ? e.arrow_scores : [],
+          impact_x: e.impacts ? e.impacts.map((i: any) => i.x) : null,
+          impact_y: e.impacts ? e.impacts.map((i: any) => i.y) : null,
+        }))
     )
   }
 

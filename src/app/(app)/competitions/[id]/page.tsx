@@ -9,6 +9,8 @@ import { ChevronLeft, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { EditCompetitionForm } from './EditCompetitionForm'
 import { DeleteCompetitionButton } from './DeleteCompetitionButton'
+import { ScoreDistributionChart } from '@/components/progress/ScoreDistributionChart'
+import { ImpactMap } from '@/components/training/ImpactMap'
 
 export default async function CompetitionDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerSupabaseClient()
@@ -126,7 +128,31 @@ export default async function CompetitionDetailPage({ params }: { params: { id: 
           </div>
         </div>
       )}
+	  
+	  {/* Distribución de impactos */}
+      {competition.competition_ends && competition.competition_ends.length > 0 &&
+        competition.competition_ends.some((e: any) => e.arrow_scores?.length > 0) && (
+        <div className="card p-5 space-y-3">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">📊 Distribución de impactos</h2>
+          <ScoreDistributionChart
+            arrowScores={competition.competition_ends.flatMap((e: any) => e.arrow_scores ?? [])}
+            modality={(competition.modality ?? 'sala') as any}
+          />
+        </div>
+      )}
 
+{/* Mapa de dispersión */}
+      {competition.competition_ends &&
+        competition.competition_ends.some((e: any) => e.impact_x && e.impact_x.length > 0) && (
+        <div className="card p-5 space-y-3">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">🎯 Mapa de dispersión</h2>
+          <ImpactMap
+            ends={competition.competition_ends}
+            modality={(competition.modality ?? 'sala') as any}
+          />
+        </div>
+      )}
+	  
       {/* Fotos */}
       <div className="card p-5 space-y-3">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">Fotos</h2>

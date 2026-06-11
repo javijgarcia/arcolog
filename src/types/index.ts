@@ -185,6 +185,7 @@ export interface SessionEndForm {
   score: number
   arrow_scores: string[]
   notes?: string
+  impacts?: { x: number; y: number }[]
 }
 
 export interface CompetitionScoreForm {
@@ -357,6 +358,8 @@ export interface ScheduledTrainingCompletion {
   session_id: string | null
   status: CompletionStatus
   completed_at: string | null
+  event_type: 'entrenamiento' | 'competicion'
+  competition_name: string | null
   created_at: string
   profiles?: Profile
 }

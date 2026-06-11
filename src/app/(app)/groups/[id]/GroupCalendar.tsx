@@ -9,6 +9,8 @@ interface ScheduledTraining {
   scheduled_date: string
   modality: string | null
   objective: string | null
+  event_type: string
+  competition_name: string | null
 }
 
 interface ActivitySession {
@@ -104,7 +106,7 @@ export function GroupCalendar({ scheduled, activity }: Props) {
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <span className="text-xs text-slate-400">Entrenado</span>
+            <span className="text-xs text-slate-400">Competición</span>
           </div>
           <button
             type="button"
@@ -155,8 +157,12 @@ export function GroupCalendar({ scheduled, activity }: Props) {
                 } ${hasAny ? 'cursor-pointer' : 'cursor-default'}`}
               >
                 <span className={`${
-                  hasScheduled && hasActivity ? 'text-purple-700 dark:text-purple-300'
-                  : hasScheduled ? 'text-brand-700 dark:text-brand-300'
+                 hasScheduled && hasActivity
+                    ? 'bg-purple-100 dark:bg-purple-900/30'
+                    : hasScheduled && scheduledByDate[date]?.some(s => s.event_type === 'competicion')
+                    ? 'bg-amber-100 dark:bg-amber-900/30'
+                    : hasScheduled
+                    ? 'bg-brand-100 dark:bg-brand-900/30'
                   : hasActivity ? 'text-amber-700 dark:text-amber-300'
                   : 'text-slate-400 dark:text-slate-500'
                 }`}>
@@ -183,11 +189,20 @@ export function GroupCalendar({ scheduled, activity }: Props) {
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-brand-600 dark:text-brand-400">🔵 Programado</p>
               {selectedScheduled.map(s => (
-                <div key={s.id} className="bg-brand-50 dark:bg-brand-900/20 rounded-lg px-3 py-2">
-                  <p className="text-xs text-slate-700 dark:text-slate-300">
-                    {s.modality ? MODALITY_LABELS[s.modality as keyof typeof MODALITY_LABELS] : 'Sin modalidad'}
-                    {s.objective ? ` · ${s.objective}` : ''}
+                <div key={s.id} className={`rounded-lg px-3 py-2 ${
+                  s.event_type === 'competicion'
+                    ? 'bg-amber-50 dark:bg-amber-900/20'
+                    : 'bg-brand-50 dark:bg-brand-900/20'
+                }`}>
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {s.event_type === 'competicion' ? '🏆 ' : '🏹 '}
+                    {s.event_type === 'competicion'
+                      ? s.competition_name ?? 'Competición'
+                      : s.modality ? MODALITY_LABELS[s.modality as keyof typeof MODALITY_LABELS] : 'Entrenamiento'}
                   </p>
+                  {s.objective && s.event_type === 'entrenamiento' && (
+                    <p className="text-xs text-slate-500 mt-0.5">{s.objective}</p>
+                  )}
                 </div>
               ))}
             </div>

@@ -17,6 +17,8 @@ export async function createScheduledTraining(formData: FormData) {
       group_id: groupId,
       created_by: user.id,
       scheduled_date: formData.get('scheduled_date') as string,
+      event_type: formData.get('event_type') as string || 'entrenamiento',
+      competition_name: formData.get('competition_name') as string || null,
       modality: formData.get('modality') as string || null,
       distance_meters: formData.get('distance_meters') ? Number(formData.get('distance_meters')) : null,
       objective: formData.get('objective') as string || null,

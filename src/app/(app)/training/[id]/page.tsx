@@ -10,6 +10,8 @@ import { ChevronLeft, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { getTrainingSessions } from '@/lib/actions/training'
 import { EditSessionForm } from './EditSessionForm'
+import { ScoreDistributionChart } from '@/components/progress/ScoreDistributionChart'
+import { ImpactMap } from '@/components/training/ImpactMap'
 
 function getArrowColor(score: string, modality: Modality): string {
   if (modality === 'campo') {
@@ -135,6 +137,7 @@ export default async function TrainingSessionPage({ params }: { params: { id: st
           </div>
         </div>
       )}
+	  
       {/* Detalles */}
       <div className="card p-5 space-y-3">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-1">Detalles</h2>
@@ -230,6 +233,26 @@ export default async function TrainingSessionPage({ params }: { params: { id: st
           </div>
         </div>
       )}
+	  
+	  {/* Distribución de impactos */}
+      {ends.length > 0 && ends.some((e: any) => e.arrow_scores?.length > 0) && (
+        <div className="card p-5 space-y-3">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">📊 Distribución de impactos</h2>
+          <ScoreDistributionChart
+            arrowScores={ends.flatMap((e: any) => e.arrow_scores ?? [])}
+            modality={modality}
+          />
+        </div>
+      )}
+	  
+	  {/* Mapa de dispersión */}
+      {ends.some((e: any) => e.impact_x && e.impact_x.length > 0) && (
+        <div className="card p-5 space-y-3">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">🎯 Mapa de dispersión</h2>
+          <ImpactMap ends={ends} modality={modality} />
+        </div>
+      )}
+	  
 	  {/* Fotos */}
       <div className="card p-5 space-y-3">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">Fotos</h2>

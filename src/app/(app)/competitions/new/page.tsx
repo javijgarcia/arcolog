@@ -8,6 +8,7 @@ import { ChevronLeft } from 'lucide-react'
 import { MODALITY_LABELS, MODALITY_CONFIG, COMPETITION_TYPE_LABELS } from '@/types'
 import type { Modality, SessionEndForm } from '@/types'
 import { ScoreBoard } from '@/components/training/ScoreBoard'
+import { ArcheryTarget } from '@/components/training/ArcheryTarget'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -21,6 +22,16 @@ export default function NewCompetitionPage() {
   const [dianaCount, setDianaCount] = useState(24)
   const [controlMode, setControlMode] = useState(false)
   const [ends, setEnds] = useState<SessionEndForm[]>([])
+  const [dianaMode, setDianaMode] = useState(false)
+  
+  // Calcular X y 10s automáticamente del modo control
+  const autoXCount = ends.flatMap(e => e.arrow_scores).filter(s => s === 'X').length
+  const autoTensCount = ends.flatMap(e => e.arrow_scores).filter(s => {
+    if (modality === '3d') return s === '11'
+    if (modality === 'campo') return s === '6'
+    if (modality === 'sala') return s === '9'
+    return s === '10'
+  }).length
 
   const config = modality ? MODALITY_CONFIG[modality] : null
 
@@ -237,6 +248,28 @@ export default function NewCompetitionPage() {
             </button>
           </div>
         )}
+		
+		{controlMode && modality && (
+          <div className="card p-4 flex items-center justify-between">
+            <div>
+              <p className="font-medium text-slate-900 dark:text-white">Modo diana</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Marca cada impacto directamente en la diana
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setDianaMode(!dianaMode); setEnds([]) }}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                dianaMode ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'
+              }`}
+            >
+              <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                dianaMode ? 'translate-x-7' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+        )}
 
         {/* Tandas — Modo Control */}
         {controlMode && modality && (
@@ -284,12 +317,27 @@ export default function NewCompetitionPage() {
               </div>
             )}
 
-            {!sessionComplete ? (
-              <ScoreBoard
-                modality={modality}
-                endNumber={currentEndNumber}
-                onEndComplete={handleEndComplete}
-              />
+           {!sessionComplete ? (
+              dianaMode ? (
+                <ArcheryTarget
+                  modality={modality}
+                  endNumber={currentEndNumber}
+                  arrowsPerEnd={config.arrowsPerEnd}
+                  onEndComplete={(end) => handleEndComplete({
+                    end_number: end.end_number,
+                    arrows: end.arrows,
+                    score: end.score,
+                    arrow_scores: end.arrow_scores,
+                    impacts: end.impacts,
+                  })}
+                />
+              ) : (
+                <ScoreBoard
+                  modality={modality}
+                  endNumber={currentEndNumber}
+                  onEndComplete={handleEndComplete}
+                />
+              )
             ) : (
               <div className="text-center py-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
                 <p className="text-green-700 dark:text-green-400 font-medium">✅ Competición completa</p>
@@ -341,13 +389,13 @@ export default function NewCompetitionPage() {
                 <label className="label">
                   {modality === '3d' ? '11s' : modality === 'campo' ? '6s' : 'X'}
                 </label>
-                <input name="x_count" type="number" min={0} defaultValue={0} className="input" />
+                <input name="x_count" type="number" min={0} value={autoXCount} onChange={() => {}} className="input bg-slate-50 dark:bg-slate-800" readOnly />
               </div>
               <div>
                 <label className="label">
                   {modality === '3d' ? '10s' : modality === 'campo' ? '5s' : modality === 'sala' ? '9s' : '10s'}
                 </label>
-                <input name="tens_count" type="number" min={0} defaultValue={0} className="input" />
+                <input name="tens_count" type="number" min={0} value={autoTensCount} onChange={() => {}} className="input bg-slate-50 dark:bg-slate-800" readOnly />
               </div>
               <div>
                 <label className="label">Posición</label>
