@@ -29,9 +29,10 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith('/auth')
   const isPublicRoute = request.nextUrl.pathname === '/'
   const isUpdatePassword = request.nextUrl.pathname === '/auth/update-password'
+  const isPublicBracket = request.nextUrl.pathname.startsWith('/public')
 
   // Redirect unauthenticated users to login
- if (!user && !isAuthRoute && !isPublicRoute && !isUpdatePassword) {
+ if (!user && !isAuthRoute && !isPublicRoute && !isUpdatePassword && !isPublicBracket) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)

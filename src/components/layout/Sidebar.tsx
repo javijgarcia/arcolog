@@ -33,7 +33,8 @@ export function Sidebar() {
           { href: '/competitions/history', label: 'Competiciones', icon: Trophy },
           { href: '/progress', label: 'Progreso', icon: TrendingUp },
           { href: '/achievements', label: 'Logros', icon: Medal },
-          { href: '/groups', label: 'Grupos', icon: Users },
+         { href: '/groups', label: 'Grupos', icon: Users },
+          { href: '/eliminations', label: 'Eliminatorias', icon: Trophy },
         ].map(item => (
           <Link
             key={item.href}
@@ -68,11 +69,12 @@ export function MobileBottomNav() {
   const pathname = usePathname()
   const [showMore, setShowMore] = useState(false)
 
-  const mainNav = [
+ const mainNav = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
     { href: '/training/new', icon: PlusCircle, label: 'Entreno' },
     { href: '/progress', icon: TrendingUp, label: 'Progreso' },
     { href: '/groups', icon: Users, label: 'Grupos' },
+    { href: '/eliminations', icon: Trophy, label: 'Eliminatorias' },
   ]
 
   const moreNav = [

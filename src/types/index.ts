@@ -373,3 +373,66 @@ export interface CompetitionEnd {
   arrow_scores: string[]
   created_at: string
 }
+
+export type BracketStatus = 'draft' | 'active' | 'completed'
+export type MatchStatus = 'pending' | 'active' | 'shootoff' | 'completed'
+
+export interface EliminationBracket {
+  id: string
+  created_by: string
+  title: string
+  modality: Modality
+  arrows_per_set: number
+  sets_to_win: number
+  participant_count: number
+  status: BracketStatus
+  public_token: string
+  group_id: string | null
+  created_at: string
+  updated_at: string
+  elimination_participants?: EliminationParticipant[]
+  elimination_matches?: EliminationMatch[]
+}
+
+export interface EliminationParticipant {
+  id: string
+  bracket_id: string
+  user_id: string | null
+  display_name: string
+  seed: number
+  created_at: string
+}
+
+export interface EliminationMatch {
+  id: string
+  bracket_id: string
+  round: number
+  position: number
+  participant1_id: string | null
+  participant2_id: string | null
+  winner_id: string | null
+  score1: number
+  score2: number
+  status: MatchStatus
+  next_match_id: string | null
+  created_at: string
+  updated_at: string
+  elimination_sets?: EliminationSet[]
+  participant1?: EliminationParticipant
+  participant2?: EliminationParticipant
+  winner?: EliminationParticipant
+}
+
+export interface EliminationSet {
+  id: string
+  match_id: string
+  set_number: number
+  arrow_scores1: string[]
+  arrow_scores2: string[]
+  total1: number
+  total2: number
+  points1: number
+  points2: number
+  is_shootoff: boolean
+  created_at: string
+}
