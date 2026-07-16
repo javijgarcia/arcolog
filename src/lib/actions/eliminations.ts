@@ -7,6 +7,7 @@ import type { Modality } from '@/types'
 export async function createBracket(data: {
   title: string
   modality: Modality
+  format_type: 'sets' | 'compuesto'
   arrows_per_set: number
   sets_to_win: number
   participant_count: number
@@ -17,13 +18,13 @@ export async function createBracket(data: {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'No autenticado' }
 
-  // Crear el bracket
-  const { data: bracket, error: bracketError } = await supabase
+  const { data: newBracket, error: bracketError } = await supabase
     .from('elimination_brackets')
     .insert({
       created_by: user.id,
       title: data.title,
       modality: data.modality,
+      format_type: data.format_type,
       arrows_per_set: data.arrows_per_set,
       sets_to_win: data.sets_to_win,
       participant_count: data.participant_count,
@@ -35,12 +36,11 @@ export async function createBracket(data: {
 
   if (bracketError) return { error: bracketError.message }
 
-  // Crear participantes con seed aleatorio
   const shuffled = [...data.participants].sort(() => Math.random() - 0.5)
   const { data: participants, error: participantsError } = await supabase
     .from('elimination_participants')
     .insert(shuffled.map((p, i) => ({
-      bracket_id: bracket.id,
+      bracket_id: newBracket.id,
       display_name: p.display_name,
       user_id: p.user_id ?? null,
       seed: i + 1,
@@ -49,15 +49,13 @@ export async function createBracket(data: {
 
   if (participantsError) return { error: participantsError.message }
 
-  // Generar los enfrentamientos del cuadro
   const rounds = Math.log2(data.participant_count)
   const matches: any[] = []
 
-  // Primera ronda — emparejar participantes
   const firstRoundMatches = data.participant_count / 2
   for (let i = 0; i < firstRoundMatches; i++) {
     matches.push({
-      bracket_id: bracket.id,
+      bracket_id: newBracket.id,
       round: 1,
       position: i + 1,
       participant1_id: participants[i * 2].id,
@@ -66,12 +64,11 @@ export async function createBracket(data: {
     })
   }
 
-  // Rondas siguientes — vacías hasta que avancen los ganadores
   for (let round = 2; round <= rounds; round++) {
     const matchesInRound = data.participant_count / Math.pow(2, round)
     for (let i = 0; i < matchesInRound; i++) {
       matches.push({
-        bracket_id: bracket.id,
+        bracket_id: newBracket.id,
         round,
         position: i + 1,
         participant1_id: null,
@@ -88,7 +85,6 @@ export async function createBracket(data: {
 
   if (matchesError) return { error: matchesError.message }
 
-  // Vincular next_match_id entre rondas
   for (let round = 1; round < rounds; round++) {
     const currentRoundMatches = createdMatches.filter(m => m.round === round)
     const nextRoundMatches = createdMatches.filter(m => m.round === round + 1)
@@ -103,7 +99,7 @@ export async function createBracket(data: {
   }
 
   revalidatePath('/eliminations')
-  return { success: true, bracketId: bracket.id, token: bracket.public_token }
+  return { success: true, bracketId: newBracket.id, token: newBracket.public_token }
 }
 
 export async function getBrackets() {
@@ -149,7 +145,6 @@ export async function startBracket(bracketId: string) {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) return { error: 'No autenticado' }
 
-  // Activar primera ronda
   const { error } = await supabase
     .from('elimination_brackets')
     .update({ status: 'active', updated_at: new Date().toISOString() })
@@ -174,6 +169,7 @@ export async function submitSet(data: {
   arrow_scores1: string[]
   arrow_scores2: string[]
   is_shootoff?: boolean
+  shootoff_winner?: '1' | '2' | null
 }) {
   const supabase = await createServerSupabaseClient()
 
@@ -186,14 +182,14 @@ export async function submitSet(data: {
   if (data.is_shootoff) {
     if (total1 > total2) { points1 = 1; points2 = 0 }
     else if (total2 > total1) { points1 = 0; points2 = 1 }
-    else { points1 = 1; points2 = 0 } // Empate: gana quien tiene la flecha más cercana al centro — por defecto arquero 1
+    else if (data.shootoff_winner === '1') { points1 = 1; points2 = 0 }
+    else if (data.shootoff_winner === '2') { points1 = 0; points2 = 1 }
   } else {
     if (total1 > total2) { points1 = 2 }
     else if (total2 > total1) { points2 = 2 }
     else { points1 = 1; points2 = 1 }
   }
 
-  // Guardar el set
   const { error: setError } = await supabase
     .from('elimination_sets')
     .insert({
@@ -210,7 +206,6 @@ export async function submitSet(data: {
 
   if (setError) return { error: setError.message }
 
-  // Actualizar score acumulado del match
   const { data: match } = await supabase
     .from('elimination_matches')
     .select('*, elimination_sets(*)')
@@ -218,55 +213,94 @@ export async function submitSet(data: {
     .single()
 
   if (!match) return { error: 'Match no encontrado' }
-  
-  const { data: bracket } = await supabase
+
+  const { data: bracketData } = await supabase
     .from('elimination_brackets')
-    .select('sets_to_win')
+    .select('sets_to_win, format_type')
     .eq('id', match.bracket_id)
     .single()
 
-  const newScore1 = match.score1 + (data.is_shootoff ? 0 : points1)
-  const newScore2 = match.score2 + (data.is_shootoff ? 0 : points2)
-  
-  // Verificar si hay ganador
-
-const setsToWin = bracket?.sets_to_win ?? 3
+  const formatType = bracketData?.format_type ?? 'sets'
+  const setsToWin = bracketData?.sets_to_win ?? 3
   const maxPoints = setsToWin * 2
-  console.log('setsToWin:', setsToWin, 'maxPoints:', maxPoints, 'newScore1:', newScore1, 'newScore2:', newScore2)
 
   let newStatus = match.status
   let winnerId = null
 
- if (data.is_shootoff) {
-    // En shoot-off el ganador es quien tenga más puntos (total1 vs total2)
-    if (total1 > total2) {
+  if (data.is_shootoff) {
+    if (points1 > points2) {
       winnerId = match.participant1_id
-    } else {
+    } else if (points2 > points1) {
       winnerId = match.participant2_id
     }
-    newStatus = 'completed'
-  } else if (newScore1 >= maxPoints) {
-    winnerId = match.participant1_id
-    newStatus = 'completed'
-  } else if (newScore2 >= maxPoints) {
-    winnerId = match.participant2_id
-    newStatus = 'completed'
-  } else if (newScore1 === (maxPoints - 1) && newScore2 === (maxPoints - 1)) {
-    newStatus = 'shootoff'
+    if (winnerId) newStatus = 'completed'
+
+    await supabase
+      .from('elimination_matches')
+      .update({
+        status: newStatus,
+        winner_id: winnerId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', data.match_id)
+
+  } else if (formatType === 'compuesto') {
+  // El SELECT ya incluye el set recién insertado, no hay que sumar total1/total2
+    const allSetsComp = (match.elimination_sets ?? []).filter((s: any) => !s.is_shootoff)
+    const totalSets = allSetsComp.length
+    const accScore1 = allSetsComp.reduce((sum: number, s: any) => sum + (s.total1 ?? 0), 0)
+    const accScore2 = allSetsComp.reduce((sum: number, s: any) => sum + (s.total2 ?? 0), 0)
+	
+
+    if (totalSets >= setsToWin) {
+      if (accScore1 > accScore2) {
+        winnerId = match.participant1_id
+        newStatus = 'completed'
+      } else if (accScore2 > accScore1) {
+        winnerId = match.participant2_id
+        newStatus = 'completed'
+      } else {
+        newStatus = 'shootoff'
+      }
+    }
+
+    await supabase
+      .from('elimination_matches')
+      .update({
+        score1: accScore1,
+        score2: accScore2,
+        status: newStatus,
+        winner_id: winnerId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', data.match_id)
+
+  } else {
+    const newScore1 = match.score1 + points1
+    const newScore2 = match.score2 + points2
+
+    if (newScore1 >= maxPoints) {
+      winnerId = match.participant1_id
+      newStatus = 'completed'
+    } else if (newScore2 >= maxPoints) {
+      winnerId = match.participant2_id
+      newStatus = 'completed'
+    } else if (newScore1 === (maxPoints - 1) && newScore2 === (maxPoints - 1)) {
+      newStatus = 'shootoff'
+    }
+
+    await supabase
+      .from('elimination_matches')
+      .update({
+        score1: newScore1,
+        score2: newScore2,
+        status: newStatus,
+        winner_id: winnerId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', data.match_id)
   }
 
-  await supabase
-    .from('elimination_matches')
-    .update({
-      score1: newScore1,
-      score2: newScore2,
-      status: newStatus,
-      winner_id: winnerId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', data.match_id)
-
-  // Si hay ganador, avanzarlo al siguiente match
   if (winnerId && match.next_match_id) {
     const { data: nextMatch } = await supabase
       .from('elimination_matches')
@@ -286,7 +320,6 @@ const setsToWin = bracket?.sets_to_win ?? 3
     }
   }
 
-  // Si era la final y hay ganador, completar el bracket
   if (winnerId && !match.next_match_id) {
     await supabase
       .from('elimination_brackets')

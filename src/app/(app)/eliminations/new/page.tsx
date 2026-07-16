@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createBracket } from '@/lib/actions/eliminations'
 import { MODALITY_LABELS } from '@/types'
 import type { Modality } from '@/types'
-import { ChevronLeft, Plus, Trash2, Users } from 'lucide-react'
+import { ChevronLeft, Users } from 'lucide-react'
 import Link from 'next/link'
 
 const PARTICIPANT_COUNTS = [4, 8, 16, 32]
@@ -15,6 +15,7 @@ export default function NewEliminationPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modality, setModality] = useState<Modality>('sala')
+  const [formatType, setFormatType] = useState<'sets' | 'compuesto'>('sets')
   const [participantCount, setParticipantCount] = useState(8)
   const [arrowsPerSet, setArrowsPerSet] = useState(3)
   const [participants, setParticipants] = useState<{ display_name: string; user_id: null }[]>(
@@ -24,8 +25,7 @@ export default function NewEliminationPage() {
   function handleCountChange(count: number) {
     setParticipantCount(count)
     setParticipants(prev => {
-      const newArr = Array(count).fill(null).map((_, i) => prev[i] ?? { display_name: '', user_id: null })
-      return newArr
+      return Array(count).fill(null).map((_, i) => prev[i] ?? { display_name: '', user_id: null })
     })
   }
 
@@ -48,8 +48,9 @@ export default function NewEliminationPage() {
     const result = await createBracket({
       title: fd.get('title') as string,
       modality,
+      format_type: formatType,
       arrows_per_set: arrowsPerSet,
-      sets_to_win: 3,
+      sets_to_win: formatType === 'compuesto' ? 5 : 3,
       participant_count: participantCount,
       group_id: null,
       participants: participants.map(p => ({ display_name: p.display_name.trim(), user_id: null })),
@@ -78,13 +79,42 @@ export default function NewEliminationPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Datos básicos */}
         <div className="card p-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Configuración</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Configuracion</h2>
 
           <div>
             <label className="label">Nombre del cuadro *</label>
             <input name="title" type="text" required className="input" placeholder="Ej: Eliminatorias Club Sala 2025" />
+          </div>
+
+          <div>
+            <label className="label">Formato</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => { setFormatType('sets'); setArrowsPerSet(3) }}
+                className={`p-3 rounded-xl border-2 text-sm font-medium transition-all text-left ${
+                  formatType === 'sets'
+                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                Por sets
+                <p className="text-xs font-normal mt-0.5 opacity-70">Recurvo, Longbow, Desnudo, Tradicional</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFormatType('compuesto'); setArrowsPerSet(3) }}
+                className={`p-3 rounded-xl border-2 text-sm font-medium transition-all text-left ${
+                  formatType === 'compuesto'
+                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                Compuesto
+                <p className="text-xs font-normal mt-0.5 opacity-70">5 entradas acumulativas - max. 150 pts</p>
+              </button>
+            </div>
           </div>
 
           <div>
@@ -107,28 +137,39 @@ export default function NewEliminationPage() {
             </div>
           </div>
 
-          <div>
-            <label className="label">Flechas por entrada</label>
-            <div className="flex gap-2">
-              {[3, 6].map(n => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setArrowsPerSet(n)}
-                  className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
-                    arrowsPerSet === n
-                      ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
-                      : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  {n} flechas {n === 3 ? '(individual)' : '(equipos)'}
-                </button>
-              ))}
+          {formatType === 'sets' && (
+            <div>
+              <label className="label">Flechas por entrada</label>
+              <div className="flex gap-2">
+                {[3, 6].map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setArrowsPerSet(n)}
+                    className={`flex-1 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                      arrowsPerSet === n
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {n} flechas {n === 3 ? '(individual)' : '(equipos)'}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {formatType === 'compuesto' && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-3">
+              <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">Formato compuesto</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                3 flechas por entrada - 5 entradas - maximo 150 puntos - gana quien mas acumule
+              </p>
+            </div>
+          )}
 
           <div>
-            <label className="label">Número de participantes</label>
+            <label className="label">Numero de participantes</label>
             <div className="grid grid-cols-4 gap-2">
               {PARTICIPANT_COUNTS.map(n => (
                 <button
@@ -148,13 +189,12 @@ export default function NewEliminationPage() {
           </div>
         </div>
 
-        {/* Participantes */}
         <div className="card p-6 space-y-3">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Users className="w-4 h-4" />
             Participantes ({participantCount})
           </h2>
-          <p className="text-xs text-slate-400">El orden de las semifinales se sortea aleatoriamente</p>
+          <p className="text-xs text-slate-400">El orden se sortea aleatoriamente</p>
 
           <div className="space-y-2">
             {participants.map((p, i) => (

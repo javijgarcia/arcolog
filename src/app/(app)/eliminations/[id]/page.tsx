@@ -45,7 +45,10 @@ export default async function EliminationDetailPage({ params }: { params: { id: 
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
               {MODALITY_LABELS[bracket.modality as keyof typeof MODALITY_LABELS]} ·{' '}
               {bracket.participant_count} arqueros ·{' '}
-              {bracket.arrows_per_set} flechas/entrada · mejor de {bracket.sets_to_win * 2} sets
+           {bracket.arrows_per_set} flechas/entrada ·{' '}
+              {bracket.format_type === 'compuesto'
+                ? `${bracket.sets_to_win} entradas acumulativas`
+                : `mejor de ${bracket.sets_to_win * 2} sets`}
             </p>
           </div>
         </div>

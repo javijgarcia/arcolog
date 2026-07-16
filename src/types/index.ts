@@ -388,6 +388,7 @@ export interface EliminationBracket {
   status: BracketStatus
   public_token: string
   group_id: string | null
+  format_type: 'sets' | 'compuesto'
   created_at: string
   updated_at: string
   elimination_participants?: EliminationParticipant[]
