@@ -7,10 +7,11 @@ import { MODALITY_LABELS } from '@/types'
 import type { Modality } from '@/types'
 import { ChevronLeft, Users } from 'lucide-react'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 const PARTICIPANT_COUNTS = [4, 8, 16, 32]
 
-export default function NewEliminationPage() {
+function NewEliminationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const groupId = searchParams.get('group_id')
@@ -253,5 +254,12 @@ export default function NewEliminationPage() {
         </div>
       </form>
     </div>
+  )
+}
+export default function NewEliminationPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-8 text-center text-slate-400">Cargando...</div>}>
+      <NewEliminationContent />
+    </Suspense>
   )
 }
