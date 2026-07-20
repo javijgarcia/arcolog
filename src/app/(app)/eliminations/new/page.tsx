@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createBracket } from '@/lib/actions/eliminations'
 import { MODALITY_LABELS } from '@/types'
 import type { Modality } from '@/types'
@@ -12,15 +12,26 @@ const PARTICIPANT_COUNTS = [4, 8, 16, 32]
 
 export default function NewEliminationPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const groupId = searchParams.get('group_id')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modality, setModality] = useState<Modality>('sala')
   const [formatType, setFormatType] = useState<'sets' | 'compuesto'>('sets')
   const [participantCount, setParticipantCount] = useState(8)
   const [arrowsPerSet, setArrowsPerSet] = useState(3)
-  const [participants, setParticipants] = useState<{ display_name: string; user_id: null }[]>(
+  const [participants, setParticipants] = useState<{ display_name: string; user_id: string | null }[]>(
     Array(8).fill(null).map(() => ({ display_name: '', user_id: null }))
   )
+  const [groupMembers, setGroupMembers] = useState<{ user_id: string; display_name: string }[]>([])
+
+  useEffect(() => {
+    if (!groupId) return
+    fetch(`/api/group-members?group_id=${groupId}`)
+      .then(r => r.json())
+      .then(data => setGroupMembers(data ?? []))
+  }, [groupId])
 
   function handleCountChange(count: number) {
     setParticipantCount(count)
@@ -30,7 +41,11 @@ export default function NewEliminationPage() {
   }
 
   function handleNameChange(index: number, name: string) {
-    setParticipants(prev => prev.map((p, i) => i === index ? { ...p, display_name: name } : p))
+    const member = groupMembers.find(m => m.display_name === name)
+    setParticipants(prev => prev.map((p, i) => i === index
+      ? { display_name: name, user_id: member?.user_id ?? null }
+      : p
+    ))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -52,8 +67,8 @@ export default function NewEliminationPage() {
       arrows_per_set: arrowsPerSet,
       sets_to_win: formatType === 'compuesto' ? 5 : 3,
       participant_count: participantCount,
-      group_id: null,
-      participants: participants.map(p => ({ display_name: p.display_name.trim(), user_id: null })),
+      group_id: groupId,
+      participants: participants.map(p => ({ display_name: p.display_name.trim(), user_id: p.user_id })),
     })
 
     if (result?.error) {
@@ -68,7 +83,7 @@ export default function NewEliminationPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/eliminations" className="btn-ghost p-2">
+        <Link href={groupId ? `/groups/${groupId}` : '/eliminations'} className="btn-ghost p-2">
           <ChevronLeft className="w-4 h-4" />
         </Link>
         <div>
@@ -194,19 +209,33 @@ export default function NewEliminationPage() {
             <Users className="w-4 h-4" />
             Participantes ({participantCount})
           </h2>
-          <p className="text-xs text-slate-400">El orden se sortea aleatoriamente</p>
+          <p className="text-xs text-slate-400">
+            {groupMembers.length > 0
+              ? 'Selecciona del desplegable o escribe un nombre libre'
+              : 'El orden se sortea aleatoriamente'}
+          </p>
 
           <div className="space-y-2">
             {participants.map((p, i) => (
               <div key={i} className="flex items-center gap-3">
                 <span className="text-xs text-slate-400 w-6 text-right">{i + 1}</span>
-                <input
-                  type="text"
-                  value={p.display_name}
-                  onChange={e => handleNameChange(i, e.target.value)}
-                  className="input flex-1"
-                  placeholder={`Arquero ${i + 1}`}
-                />
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={p.display_name}
+                    onChange={e => handleNameChange(i, e.target.value)}
+                    className="input w-full"
+                    placeholder={`Arquero ${i + 1}${groupMembers.length > 0 ? ' o nombre libre' : ''}`}
+                    list={groupMembers.length > 0 ? `members-list-${i}` : undefined}
+                  />
+                  {groupMembers.length > 0 && (
+                    <datalist id={`members-list-${i}`}>
+                      {groupMembers.map(m => (
+                        <option key={m.user_id} value={m.display_name} />
+                      ))}
+                    </datalist>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -217,7 +246,7 @@ export default function NewEliminationPage() {
         )}
 
         <div className="flex gap-3">
-          <Link href="/eliminations" className="btn-secondary flex-1 justify-center">Cancelar</Link>
+          <Link href={groupId ? `/groups/${groupId}` : '/eliminations'} className="btn-secondary flex-1 justify-center">Cancelar</Link>
           <button type="submit" disabled={loading} className="btn-primary flex-1 justify-center">
             {loading ? 'Creando...' : 'Crear cuadro'}
           </button>

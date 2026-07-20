@@ -178,6 +178,20 @@ const isOwner = group.owner_id === user.id
           </div>
         ))}
       </div>
+	  
+	  {/* Crear eliminatoria */}
+      {isOwner && (
+        <div className="flex justify-end">
+          <Link
+            href={`/eliminations/new?group_id=${group.id}`}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <Trophy className="w-4 h-4" />
+            Crear eliminatoria
+          </Link>
+        </div>
+      )}
+	  
 	  {/* Entrenamientos programados */}
       <div className="space-y-3">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
