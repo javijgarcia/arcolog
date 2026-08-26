@@ -15,7 +15,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-       <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0 p-4 overflow-y-auto">
+        <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0 p-4">
       {/* Logo */}
       <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-2 mb-6">
         <img src="/logo.png" alt="ArcoLog" className="h-12 w-12 shrink-0 rounded-xl object-contain" />
@@ -23,7 +23,7 @@ export function Sidebar() {
       </Link>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wider px-3 mb-2">Menú</p>
         {[
           { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
