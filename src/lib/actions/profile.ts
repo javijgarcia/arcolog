@@ -24,6 +24,7 @@ export async function updateProfile(formData: FormData) {
     full_name: formData.get('full_name') as string,
     bow_type: formData.get('bow_type') as string,
     club_name: formData.get('club_name') as string,
+    country: formData.get('country') as string || null,
     updated_at: new Date().toISOString(),
   }
   const { error } = await supabase

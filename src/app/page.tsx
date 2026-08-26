@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Target, TrendingUp, BookOpen, Award } from 'lucide-react'
+import { WorldMap } from '@/components/ui/WorldMap'
 
 export default function HomePage() {
   return (
@@ -81,7 +82,17 @@ export default function HomePage() {
               <p className="text-sm text-slate-500 dark:text-slate-400">{f.desc}</p>
             </div>
           ))}
+		          </div>
+      </section>
+
+      {/* Mapa de usuarios */}
+      <section className="w-full py-12 px-4 space-y-4">
+        <div className="text-center">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            Arqueros de todo el mundo
+          </p>
         </div>
+        <WorldMap />
       </section>
 
       <footer className="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-400">

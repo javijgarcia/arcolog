@@ -46,6 +46,31 @@ export default async function ProfilePage() {
         <div>
           <label className="label">Club / Federación</label>
           <input name="club_name" type="text" defaultValue={profile?.club_name ?? ''} className="input" placeholder="Club Arco Murcia..." />
+		  <div>
+  <label className="label">País</label>
+  <select name="country" defaultValue={profile?.country ?? ''} className="input">
+    <option value="">Sin especificar</option>
+    <option value="ES">🇪🇸 España</option>
+    <option value="MX">🇲🇽 México</option>
+    <option value="AR">🇦🇷 Argentina</option>
+    <option value="CO">🇨🇴 Colombia</option>
+    <option value="CL">🇨🇱 Chile</option>
+    <option value="PE">🇵🇪 Perú</option>
+    <option value="VE">🇻🇪 Venezuela</option>
+    <option value="EC">🇪🇨 Ecuador</option>
+    <option value="BO">🇧🇴 Bolivia</option>
+    <option value="PY">🇵🇾 Paraguay</option>
+    <option value="UY">🇺🇾 Uruguay</option>
+    <option value="BR">🇧🇷 Brasil</option>
+    <option value="US">🇺🇸 Estados Unidos</option>
+    <option value="FR">🇫🇷 Francia</option>
+    <option value="GB">🇬🇧 Reino Unido</option>
+    <option value="DE">🇩🇪 Alemania</option>
+    <option value="IT">🇮🇹 Italia</option>
+    <option value="PT">🇵🇹 Portugal</option>
+    <option value="OTHER">🌍 Otro</option>
+  </select>
+</div>
         </div>
         <div>
           <label className="label">Tipo de arco</label>
