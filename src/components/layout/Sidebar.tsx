@@ -111,6 +111,15 @@ export function MobileBottomNav() {
                 <span className="text-center leading-tight">{item.label}</span>
               </Link>
             ))}
+			            <form action={logout}>
+              <button
+                type="submit"
+                className="flex flex-col items-center gap-1 px-2 py-2 rounded-xl transition-colors text-xs text-red-500 w-full"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Salir</span>
+              </button>
+            </form>
           </div>
         </div>
       )}
