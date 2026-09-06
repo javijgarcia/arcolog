@@ -69,15 +69,15 @@ export function MobileBottomNav() {
   const pathname = usePathname()
   const [showMore, setShowMore] = useState(false)
 
- const mainNav = [
+   const mainNav = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Inicio' },
     { href: '/training/new', icon: PlusCircle, label: 'Entreno' },
     { href: '/progress', icon: TrendingUp, label: 'Progreso' },
     { href: '/groups', icon: Users, label: 'Grupos' },
-    { href: '/eliminations', icon: Trophy, label: 'Eliminatorias' },
   ]
 
-  const moreNav = [
+   const moreNav = [
+    { href: '/eliminations', icon: Trophy, label: 'Eliminatorias' },
     { href: '/training/history', icon: History, label: 'Historial' },
     { href: '/competitions/new', icon: Trophy, label: 'Nueva comp.' },
     { href: '/competitions/history', icon: Trophy, label: 'Competiciones' },
@@ -92,7 +92,7 @@ export function MobileBottomNav() {
       {showMore && (
         <div className="lg:hidden fixed inset-0 z-40" onClick={() => setShowMore(false)}>
           <div
-            className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 grid grid-cols-4 gap-3 overflow-y-auto max-h-48"
+            className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 grid grid-cols-4 gap-3"
             onClick={e => e.stopPropagation()}
           >
             {moreNav.map(item => (
