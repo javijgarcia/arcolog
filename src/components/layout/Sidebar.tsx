@@ -92,7 +92,7 @@ export function MobileBottomNav() {
       {showMore && (
         <div className="lg:hidden fixed inset-0 z-40" onClick={() => setShowMore(false)}>
           <div
-            className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 grid grid-cols-4 gap-3"
+            className="absolute bottom-16 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 grid grid-cols-4 gap-3 overflow-y-auto max-h-48"
             onClick={e => e.stopPropagation()}
           >
             {moreNav.map(item => (
