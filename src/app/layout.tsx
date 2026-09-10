@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true },
   },
+    verification: {
+    google: 'WGmahsi3ppP5zAUL-I8vGSqi8xM-iQZAH_lkAWuY-2U',
+  },
   icons: { icon: '/logo.png', apple: '/logo.png' },
 }
 
