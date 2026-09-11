@@ -1,5 +1,7 @@
 import { getProfile, updateProfile } from '@/lib/actions/profile'
 import { getEquipment, getSightMarks, saveSightMark, deleteSightMark, saveEquipment } from '@/lib/actions/equipment'
+import { getTrainingSessions } from '@/lib/actions/training'
+import { getArcherLevel } from '@/lib/utils'
 import { BOW_TYPE_LABELS } from '@/types'
 import { UserCircle, Trash2 } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -7,11 +9,15 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Mi perfil' }
 
 export default async function ProfilePage() {
-  const [profile, equipment, sightMarks] = await Promise.all([
+  const [profile, equipment, sightMarks, sessions] = await Promise.all([
     getProfile(),
     getEquipment(),
     getSightMarks(),
+    getTrainingSessions(),
   ])
+
+  const totalArrows = sessions.reduce((sum, s) => sum + (s.total_arrows ?? 0), 0)
+  const archerLevel = getArcherLevel(totalArrows)
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
@@ -36,6 +42,39 @@ export default async function ProfilePage() {
         </div>
       </div>
 
+      {/* Nivel de arquero */}
+      <div className="card p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{archerLevel.emoji}</span>
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-white">{archerLevel.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Nivel {archerLevel.level} · {totalArrows.toLocaleString('es-ES')} flechas de entrenamiento
+              </p>
+            </div>
+          </div>
+          {archerLevel.max && (
+            <p className="text-xs text-slate-400">
+              {archerLevel.max.toLocaleString('es-ES')} para subir
+            </p>
+          )}
+        </div>
+        {archerLevel.max && (
+          <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+            <div
+              className="bg-brand-500 h-2 rounded-full transition-all"
+              style={{ width: `${archerLevel.progress}%` }}
+            />
+          </div>
+        )}
+        {!archerLevel.max && (
+          <div className="w-full bg-yellow-100 dark:bg-yellow-900/30 rounded-full h-2">
+            <div className="bg-yellow-400 h-2 rounded-full w-full" />
+          </div>
+        )}
+      </div>
+
       {/* Perfil */}
       <form action={updateProfile as any} className="card p-6 space-y-4">
         <h2 className="text-base font-semibold text-slate-900 dark:text-white">Datos personales</h2>
@@ -46,31 +85,31 @@ export default async function ProfilePage() {
         <div>
           <label className="label">Club / Federación</label>
           <input name="club_name" type="text" defaultValue={profile?.club_name ?? ''} className="input" placeholder="Club Arco Murcia..." />
-		  <div>
-  <label className="label">País</label>
-  <select name="country" defaultValue={profile?.country ?? ''} className="input">
-    <option value="">Sin especificar</option>
-    <option value="ES">🇪🇸 España</option>
-    <option value="MX">🇲🇽 México</option>
-    <option value="AR">🇦🇷 Argentina</option>
-    <option value="CO">🇨🇴 Colombia</option>
-    <option value="CL">🇨🇱 Chile</option>
-    <option value="PE">🇵🇪 Perú</option>
-    <option value="VE">🇻🇪 Venezuela</option>
-    <option value="EC">🇪🇨 Ecuador</option>
-    <option value="BO">🇧🇴 Bolivia</option>
-    <option value="PY">🇵🇾 Paraguay</option>
-    <option value="UY">🇺🇾 Uruguay</option>
-    <option value="BR">🇧🇷 Brasil</option>
-    <option value="US">🇺🇸 Estados Unidos</option>
-    <option value="FR">🇫🇷 Francia</option>
-    <option value="GB">🇬🇧 Reino Unido</option>
-    <option value="DE">🇩🇪 Alemania</option>
-    <option value="IT">🇮🇹 Italia</option>
-    <option value="PT">🇵🇹 Portugal</option>
-    <option value="OTHER">🌍 Otro</option>
-  </select>
-</div>
+        </div>
+        <div>
+          <label className="label">País</label>
+          <select name="country" defaultValue={profile?.country ?? ''} className="input">
+            <option value="">Sin especificar</option>
+            <option value="ES">🇪🇸 España</option>
+            <option value="MX">🇲🇽 México</option>
+            <option value="AR">🇦🇷 Argentina</option>
+            <option value="CO">🇨🇴 Colombia</option>
+            <option value="CL">🇨🇱 Chile</option>
+            <option value="PE">🇵🇪 Perú</option>
+            <option value="VE">🇻🇪 Venezuela</option>
+            <option value="EC">🇪🇨 Ecuador</option>
+            <option value="BO">🇧🇴 Bolivia</option>
+            <option value="PY">🇵🇾 Paraguay</option>
+            <option value="UY">🇺🇾 Uruguay</option>
+            <option value="BR">🇧🇷 Brasil</option>
+            <option value="US">🇺🇸 Estados Unidos</option>
+            <option value="FR">🇫🇷 Francia</option>
+            <option value="GB">🇬🇧 Reino Unido</option>
+            <option value="DE">🇩🇪 Alemania</option>
+            <option value="IT">🇮🇹 Italia</option>
+            <option value="PT">🇵🇹 Portugal</option>
+            <option value="OTHER">🌍 Otro</option>
+          </select>
         </div>
         <div>
           <label className="label">Tipo de arco</label>
@@ -123,7 +162,7 @@ export default async function ProfilePage() {
         </div>
         <div>
           <label className="label">Apertura</label>
-         <input name="apertura" type="text" defaultValue={equipment?.apertura ?? ''} className="input" placeholder="26, 28..." />
+          <input name="apertura" type="text" defaultValue={equipment?.apertura ?? ''} className="input" placeholder="26, 28..." />
         </div>
         <button type="submit" className="btn-primary w-full justify-center">Guardar equipamiento</button>
       </form>

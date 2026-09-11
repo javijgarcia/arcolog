@@ -29,3 +29,27 @@ export function scoreColor(score: number, max = 300): string {
   if (pct >= 0.6) return 'text-amber-600 dark:text-amber-400'
   return 'text-slate-500'
 }
+
+export function getArcherLevel(totalArrows: number): {
+  level: number
+  name: string
+  emoji: string
+  min: number
+  max: number | null
+  progress: number
+} {
+  const levels = [
+    { level: 1, name: 'Principiante', emoji: '🌱', min: 0, max: 2000 },
+    { level: 2, name: 'Arquero', emoji: '🏹', min: 2000, max: 7500 },
+    { level: 3, name: 'Veterano', emoji: '⭐', min: 7500, max: 20000 },
+    { level: 4, name: 'Experto', emoji: '🎯', min: 20000, max: 50000 },
+    { level: 5, name: 'Élite', emoji: '👑', min: 50000, max: null },
+  ]
+
+  const current = levels.findLast(l => totalArrows >= l.min) ?? levels[0]
+  const progress = current.max
+    ? Math.min(Math.round(((totalArrows - current.min) / (current.max - current.min)) * 100), 100)
+    : 100
+
+  return { ...current, progress }
+}
