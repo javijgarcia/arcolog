@@ -40,7 +40,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/auth/register" className="btn-primary text-base px-6 py-3 w-full sm:w-auto">
-              Empezar gratis
+              Empezar
             </Link>
             <Link href="/auth/login" className="btn-secondary text-base px-6 py-3 w-full sm:w-auto">
               Ya tengo cuenta
