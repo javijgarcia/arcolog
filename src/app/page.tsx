@@ -17,7 +17,7 @@ export default function HomePage() {
               Entrar
             </Link>
             <Link href="/auth/register" className="btn-primary text-sm py-2">
-              Registrarse gratis
+              Regístrate
             </Link>
           </div>
         </div>
